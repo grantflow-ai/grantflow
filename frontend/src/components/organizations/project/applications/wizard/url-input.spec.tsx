@@ -684,8 +684,7 @@ describe.sequential("UrlInput", () => {
 				const { calls } = vi.mocked(tracking.trackEvent).mock;
 				expect(calls).toHaveLength(2);
 
-				const call0 = calls[0];
-				const call1 = calls[1];
+				const [call0, call1] = calls;
 
 				if (!(call0 && call1)) {
 					throw new Error("Expected both calls to be defined");

@@ -535,9 +535,7 @@ describe("TemplateFileUploader", () => {
 				const { calls } = vi.mocked(tracking.trackEvent).mock;
 				expect(calls).toHaveLength(3);
 
-				const call0 = calls[0];
-				const call1 = calls[1];
-				const call2 = calls[2];
+				const [call0, call1, call2] = calls;
 
 				if (!(call0 && call1 && call2)) {
 					throw new Error("Expected all three calls to be defined");

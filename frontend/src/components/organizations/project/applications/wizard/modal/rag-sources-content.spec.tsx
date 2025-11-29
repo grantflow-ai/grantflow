@@ -14,7 +14,10 @@ describe.sequential("RagSourcesContent", () => {
 	});
 
 	it("renders no template message when application has no grant template", () => {
-		const application = ApplicationWithTemplateFactory.build({});
+		// @ts-expect-error grant template must be explicitly set undefined
+		const application = ApplicationWithTemplateFactory.build({
+			grant_template: undefined,
+		});
 
 		useApplicationStore.setState({ application });
 

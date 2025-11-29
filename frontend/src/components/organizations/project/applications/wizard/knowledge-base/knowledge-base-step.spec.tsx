@@ -133,7 +133,7 @@ describe.sequential("KnowledgeBaseStep", () => {
 					RagSourceFactory.build({
 						filename: "test.pdf",
 						sourceId: "file-1",
-						status: "FINISHED",
+						status: "FINISHED" as const,
 					}),
 				],
 			});
@@ -154,7 +154,7 @@ describe.sequential("KnowledgeBaseStep", () => {
 				rag_sources: [
 					RagSourceFactory.build({
 						sourceId: "url-1",
-						status: "FINISHED",
+						status: "FINISHED" as const,
 						url: "https://example.com",
 					}),
 				],
@@ -492,12 +492,12 @@ describe.sequential("KnowledgeBaseStep", () => {
 				rag_sources: [
 					RagSourceFactory.build({
 						sourceId: "invalid-1",
-						status: "FINISHED",
+						status: "FINISHED" as const,
 					}),
 					RagSourceFactory.build({
 						filename: "valid-file.pdf",
 						sourceId: "file-1",
-						status: "FINISHED",
+						status: "FINISHED" as const,
 					}),
 				],
 			});
@@ -588,10 +588,13 @@ describe.sequential("KnowledgeBaseStep", () => {
 		});
 
 		it("handles undefined rag_sources", () => {
-			const application = ApplicationFactory.build({
-				id: "test-app-id",
-				project_id: "test-project",
-			});
+			const application = {
+				...ApplicationFactory.build({
+					id: "test-app-id",
+					project_id: "test-project",
+				}),
+				rag_sources: [],
+			};
 
 			useApplicationStore.setState({ application });
 			render(<KnowledgeBaseStep />);

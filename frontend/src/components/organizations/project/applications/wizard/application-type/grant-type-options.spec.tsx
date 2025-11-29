@@ -27,7 +27,7 @@ describe.sequential("GrantTypeCard", () => {
 		const handleSelect = vi.fn();
 		const [option] = GRANT_TYPE_OPTIONS;
 
-		render(<GrantTypeCard onSelect={handleSelect} option={option} />);
+		render(<GrantTypeCard onSelect={handleSelect} option={option!} />);
 
 		const card = screen.getByTestId("grant-type-card-basic-science");
 		expect(card).toBeInTheDocument();
@@ -44,7 +44,7 @@ describe.sequential("GrantTypeCard", () => {
 		const user = userEvent.setup();
 		const [option] = GRANT_TYPE_OPTIONS;
 
-		render(<GrantTypeCard onSelect={handleSelect} option={option} />);
+		render(<GrantTypeCard onSelect={handleSelect} option={option!} />);
 
 		const card = screen.getByTestId("grant-type-card-basic-science");
 		await user.click(card);
@@ -57,7 +57,7 @@ describe.sequential("GrantTypeCard", () => {
 		const user = userEvent.setup();
 		const [, option] = GRANT_TYPE_OPTIONS;
 
-		render(<GrantTypeCard onSelect={handleSelect} option={option} />);
+		render(<GrantTypeCard onSelect={handleSelect} option={option!} />);
 
 		const card = screen.getByTestId("grant-type-card-translational-research");
 
@@ -73,7 +73,7 @@ describe.sequential("GrantTypeCard", () => {
 		const user = userEvent.setup();
 		const [option] = GRANT_TYPE_OPTIONS;
 
-		render(<GrantTypeCard disabled onSelect={handleSelect} option={option} />);
+		render(<GrantTypeCard disabled onSelect={handleSelect} option={option!} />);
 
 		const card = screen.getByTestId("grant-type-card-basic-science");
 		expect(card).toBeDisabled();
@@ -88,7 +88,7 @@ describe.sequential("GrantTypeCard", () => {
 		const user = userEvent.setup();
 		const [option] = GRANT_TYPE_OPTIONS;
 
-		render(<GrantTypeCard disabled onSelect={handleSelect} option={option} />);
+		render(<GrantTypeCard disabled onSelect={handleSelect} option={option!} />);
 
 		const card = screen.getByTestId("grant-type-card-basic-science");
 
@@ -104,7 +104,7 @@ describe.sequential("GrantTypeCard", () => {
 		const handleSelect = vi.fn();
 		const [option] = GRANT_TYPE_OPTIONS;
 
-		render(<GrantTypeCard onSelect={handleSelect} option={option} />);
+		render(<GrantTypeCard onSelect={handleSelect} option={option!} />);
 
 		const card = screen.getByTestId("grant-type-card-basic-science");
 		expect(card).toHaveAttribute("type", "button");
@@ -114,12 +114,12 @@ describe.sequential("GrantTypeCard", () => {
 		const handleSelect = vi.fn();
 		const [firstOption, secondOption] = GRANT_TYPE_OPTIONS;
 
-		render(<GrantTypeCard onSelect={handleSelect} option={firstOption} />);
+		render(<GrantTypeCard onSelect={handleSelect} option={firstOption!} />);
 		expect(screen.getByTestId("grant-type-card-basic-science")).toBeInTheDocument();
 
 		cleanup();
 
-		render(<GrantTypeCard onSelect={handleSelect} option={secondOption} />);
+		render(<GrantTypeCard onSelect={handleSelect} option={secondOption!} />);
 		expect(screen.getByTestId("grant-type-card-translational-research")).toBeInTheDocument();
 	});
 
@@ -128,7 +128,7 @@ describe.sequential("GrantTypeCard", () => {
 		const user = userEvent.setup();
 		const [option] = GRANT_TYPE_OPTIONS;
 
-		render(<GrantTypeCard onSelect={handleSelect} option={option} />);
+		render(<GrantTypeCard onSelect={handleSelect} option={option!} />);
 
 		const card = screen.getByTestId("grant-type-card-basic-science");
 
@@ -164,7 +164,7 @@ describe.sequential("GrantTypeCard", () => {
 		const user = userEvent.setup();
 		const [option] = GRANT_TYPE_OPTIONS;
 
-		render(<GrantTypeCard onSelect={handleSelect} option={option} />);
+		render(<GrantTypeCard onSelect={handleSelect} option={option!} />);
 
 		const card = screen.getByTestId("grant-type-card-basic-science");
 
@@ -183,7 +183,7 @@ describe.sequential("GrantTypeCard", () => {
 		const user = userEvent.setup();
 		const [option] = GRANT_TYPE_OPTIONS;
 
-		render(<GrantTypeCard disabled onSelect={handleSelect} option={option} />);
+		render(<GrantTypeCard disabled onSelect={handleSelect} option={option!} />);
 
 		const card = screen.getByTestId("grant-type-card-basic-science");
 

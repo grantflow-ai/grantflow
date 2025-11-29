@@ -66,7 +66,8 @@ describe("useWaitForSourcesReady", () => {
 	it("should throw error when organization or application is not found", async () => {
 		const { useWaitForSourcesReady } = await import("./use-wait-for-sources-ready");
 
-		useOrganizationStore.setState({});
+		useOrganizationStore.setState({ selectedOrganizationId: undefined });
+		useApplicationStore.setState({ application: null });
 
 		const { result } = renderHook(() =>
 			useWaitForSourcesReady({

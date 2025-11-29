@@ -34,21 +34,21 @@ describe.sequential("PaymentPlans", () => {
 		(() => {
 			const prices = screen.getAllByTestId("payment-card-price-text");
 			expect(prices).toHaveLength(PaymentPlansList.length);
-			expect(prices[1]).toHaveTextContent(PaymentPlansList[1].pricing.monthly.priceText);
+			expect(prices[1]).toHaveTextContent(PaymentPlansList[1]!.pricing.monthly.priceText);
 		})();
 
 		await user.click(yearlyTab);
 		(() => {
 			const prices = screen.getAllByTestId("payment-card-price-text");
 			expect(prices).toHaveLength(PaymentPlansList.length);
-			expect(prices[1]).toHaveTextContent(PaymentPlansList[1].pricing.yearly.priceText);
+			expect(prices[1]).toHaveTextContent(PaymentPlansList[1]!.pricing.yearly.priceText);
 		})();
 
 		await user.click(monthlyTab);
 		(() => {
 			const prices = screen.getAllByTestId("payment-card-price-text");
 			expect(prices).toHaveLength(PaymentPlansList.length);
-			expect(prices[1]).toHaveTextContent(PaymentPlansList[1].pricing.monthly.priceText);
+			expect(prices[1]).toHaveTextContent(PaymentPlansList[1]!.pricing.monthly.priceText);
 		})();
 	});
 });

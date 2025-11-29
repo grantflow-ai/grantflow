@@ -135,7 +135,10 @@ describe("ApplicationStructureLeftPane", () => {
 				RagSourceFactory.build({ url: "https://example.com" }),
 			],
 		});
-		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+		const mockApplication = ApplicationFactory.build({
+			grant_template: mockTemplate,
+			rag_sources: [],
+		});
 		useApplicationStore.setState({ application: mockApplication });
 
 		render(<ApplicationStructureLeftPane />);
@@ -220,7 +223,10 @@ describe("ApplicationStructureLeftPane", () => {
 			grant_sections: [GrantSectionFactory.build()],
 			rag_sources: mockSources,
 		});
-		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+		const mockApplication = ApplicationFactory.build({
+			grant_template: mockTemplate,
+			rag_sources: [],
+		});
 		useApplicationStore.setState({ application: mockApplication });
 
 		render(<ApplicationStructureLeftPane />);
