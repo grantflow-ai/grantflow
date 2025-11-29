@@ -30,9 +30,10 @@ describe("PredefinedTemplateSectionsEditor", () => {
 			expect(onChange).toHaveBeenCalled();
 		});
 
-		const [sections] = onChange.mock.calls.pop() as [GrantSection[]];
+		const lastCall = onChange.mock.calls.at(-1);
+		const [sections] = lastCall as [GrantSection[]];
 		expect(sections).toHaveLength(1);
-		expect(sections[0].title).toBe("New Section");
+		expect(sections[0]?.title).toBe("New Section");
 	});
 
 	it("updates section titles and propagates changes", async () => {
@@ -46,8 +47,9 @@ describe("PredefinedTemplateSectionsEditor", () => {
 			expect(onChange).toHaveBeenCalled();
 		});
 
-		const [sections] = onChange.mock.calls.pop() as [GrantSection[]];
-		expect(sections[0].title).toBe("Updated Title");
+		const lastCall = onChange.mock.calls.at(-1);
+		const [sections] = lastCall as [GrantSection[]];
+		expect(sections[0]?.title).toBe("Updated Title");
 	});
 
 	it("enforces a single detailed research plan section", async () => {

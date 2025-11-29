@@ -67,6 +67,7 @@ describe("useWaitForSourcesReady", () => {
 		const { useWaitForSourcesReady } = await import("./use-wait-for-sources-ready");
 
 		useOrganizationStore.setState({ selectedOrganizationId: undefined });
+		useApplicationStore.setState({ application: null });
 
 		const { result } = renderHook(() =>
 			useWaitForSourcesReady({

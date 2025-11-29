@@ -85,7 +85,7 @@ describe("User Actions", () => {
 			await deleteAccount();
 
 			expect(mockWithAuthRedirect).toHaveBeenCalledOnce();
-			const [[wrappedPromise]] = mockWithAuthRedirect.mock.calls;
+			const wrappedPromise = mockWithAuthRedirect.mock.calls[0]?.[0];
 			expect(wrappedPromise).toBeDefined();
 		});
 	});
@@ -156,7 +156,7 @@ describe("User Actions", () => {
 			await getSoleOwnedProjects();
 
 			expect(mockWithAuthRedirect).toHaveBeenCalledOnce();
-			const [[wrappedPromise]] = mockWithAuthRedirect.mock.calls;
+			const wrappedPromise = mockWithAuthRedirect.mock.calls[0]?.[0];
 			expect(wrappedPromise).toBeDefined();
 		});
 	});
@@ -221,7 +221,7 @@ describe("User Actions", () => {
 			await restoreAccount(mockToken);
 
 			expect(mockWithAuthRedirect).toHaveBeenCalledOnce();
-			const [[wrappedPromise]] = mockWithAuthRedirect.mock.calls;
+			const wrappedPromise = mockWithAuthRedirect.mock.calls[0]?.[0];
 			expect(wrappedPromise).toBeDefined();
 		});
 

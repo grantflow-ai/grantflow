@@ -14,6 +14,7 @@ describe.sequential("RagSourcesContent", () => {
 	});
 
 	it("renders no template message when application has no grant template", () => {
+		// @ts-expect-error grant template must be explicitly set undefined
 		const application = ApplicationWithTemplateFactory.build({
 			grant_template: undefined,
 		});
@@ -47,13 +48,11 @@ describe.sequential("RagSourcesContent", () => {
 						filename: "document1.pdf",
 						sourceId: "file-1",
 						status: "FINISHED",
-						url: undefined,
 					}),
 					RagSourceFactory.build({
 						filename: "document2.docx",
 						sourceId: "file-2",
 						status: "INDEXING",
-						url: undefined,
 					}),
 				],
 			}),
@@ -72,13 +71,11 @@ describe.sequential("RagSourcesContent", () => {
 			grant_template: GrantTemplateFactory.build({
 				rag_sources: [
 					RagSourceFactory.build({
-						filename: undefined,
 						sourceId: "url-1",
 						status: "FINISHED",
 						url: "https://example.com/article1",
 					}),
 					RagSourceFactory.build({
-						filename: undefined,
 						sourceId: "url-2",
 						status: "FAILED",
 						url: "https://example.com/article2",
@@ -103,10 +100,8 @@ describe.sequential("RagSourcesContent", () => {
 						filename: "document.pdf",
 						sourceId: "file-1",
 						status: "FINISHED",
-						url: undefined,
 					}),
 					RagSourceFactory.build({
-						filename: undefined,
 						sourceId: "url-1",
 						status: "FINISHED",
 						url: "https://example.com/article",
@@ -131,16 +126,13 @@ describe.sequential("RagSourcesContent", () => {
 						filename: "document1.pdf",
 						sourceId: "file-1",
 						status: "FINISHED",
-						url: undefined,
 					}),
 					RagSourceFactory.build({
 						filename: "document2.pdf",
 						sourceId: "file-2",
 						status: "FINISHED",
-						url: undefined,
 					}),
 					RagSourceFactory.build({
-						filename: undefined,
 						sourceId: "url-1",
 						status: "FINISHED",
 						url: "https://example.com/article",
@@ -166,7 +158,6 @@ describe.sequential("RagSourcesContent", () => {
 						filename: "document.pdf",
 						sourceId: "file-1",
 						status: "FINISHED",
-						url: undefined,
 					}),
 				],
 			}),
@@ -187,25 +178,21 @@ describe.sequential("RagSourcesContent", () => {
 						filename: "created.pdf",
 						sourceId: "file-1",
 						status: "CREATED",
-						url: undefined,
 					}),
 					RagSourceFactory.build({
 						filename: "indexing.pdf",
 						sourceId: "file-2",
 						status: "INDEXING",
-						url: undefined,
 					}),
 					RagSourceFactory.build({
 						filename: "finished.pdf",
 						sourceId: "file-3",
 						status: "FINISHED",
-						url: undefined,
 					}),
 					RagSourceFactory.build({
 						filename: "failed.pdf",
 						sourceId: "file-4",
 						status: "FAILED",
-						url: undefined,
 					}),
 				],
 			}),
@@ -245,14 +232,7 @@ describe.sequential("RagSourcesContent", () => {
 	it("handles unknown source types gracefully", () => {
 		const application = ApplicationWithTemplateFactory.build({
 			grant_template: GrantTemplateFactory.build({
-				rag_sources: [
-					RagSourceFactory.build({
-						filename: undefined,
-						sourceId: "unknown-1",
-						status: "FINISHED",
-						url: undefined,
-					}),
-				],
+				rag_sources: [RagSourceFactory.build({ sourceId: "unknown-1", status: "FINISHED" })],
 			}),
 		});
 
@@ -271,7 +251,6 @@ describe.sequential("RagSourcesContent", () => {
 						filename: "document.pdf",
 						sourceId: "file-1",
 						status: "FINISHED",
-						url: undefined,
 					}),
 				],
 			}),

@@ -46,7 +46,9 @@ describe("Tracing Utilities", () => {
 				"X-Trace-Timestamp": expect.any(String),
 			});
 
-			expect(new Date(headers["X-Trace-Timestamp"]).toISOString()).toBe(headers["X-Trace-Timestamp"]);
+			const timestamp = headers["X-Trace-Timestamp"];
+			if (!timestamp) throw new Error("Expected X-Trace-Timestamp to be defined");
+			expect(new Date(timestamp).toISOString()).toBe(timestamp);
 		});
 	});
 

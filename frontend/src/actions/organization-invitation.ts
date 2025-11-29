@@ -5,7 +5,7 @@ import { createOrganizationInvitation } from "@/actions/organization";
 import InvitationEmailTemplate from "@/components/email-templates/invitation-email-template";
 import { getEnv } from "@/utils/env";
 
-interface InviteOrganizationMemberParams {
+export interface InviteOrganizationMemberParams {
 	email: string;
 	hasAllProjectsAccess?: boolean;
 	inviterName: string;

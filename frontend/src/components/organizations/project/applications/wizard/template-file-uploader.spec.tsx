@@ -161,7 +161,7 @@ describe("TemplateFileUploader", () => {
 	});
 
 	it("does not upload if parentId is missing", async () => {
-		render(<TemplateFileUploader parentId={undefined} sourceType="template" />);
+		render(<TemplateFileUploader sourceType="template" />);
 
 		const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
 		const fileInput = screen.getByTestId("template-file-input");
@@ -409,7 +409,7 @@ describe("TemplateFileUploader", () => {
 		});
 
 		it("does not add pending upload if parentId is missing", async () => {
-			render(<TemplateFileUploader parentId={undefined} sourceType="template" />);
+			render(<TemplateFileUploader sourceType="template" />);
 
 			const file = new File(["test content"], "test.pdf", { type: "application/pdf" });
 			const fileInput = screen.getByTestId("template-file-input");
@@ -535,22 +535,28 @@ describe("TemplateFileUploader", () => {
 				const { calls } = vi.mocked(tracking.trackEvent).mock;
 				expect(calls).toHaveLength(3);
 
-				expect(calls[0][0]).toBe(TrackingEvents.WIZARD_STEP_1_UPLOAD);
-				expect(calls[0][1]).toMatchObject({
+				const [call0, call1, call2] = calls;
+
+				if (!(call0 && call1 && call2)) {
+					throw new Error("Expected all three calls to be defined");
+				}
+
+				expect(call0[0]).toBe(TrackingEvents.WIZARD_STEP_1_UPLOAD);
+				expect(call0[1]).toMatchObject({
 					fileName: "doc1.pdf",
 					fileSize: 1_024_000,
 					fileType: "application/pdf",
 				});
 
-				expect(calls[1][0]).toBe(TrackingEvents.WIZARD_STEP_1_UPLOAD);
-				expect(calls[1][1]).toMatchObject({
+				expect(call1[0]).toBe(TrackingEvents.WIZARD_STEP_1_UPLOAD);
+				expect(call1[1]).toMatchObject({
 					fileName: "doc2.pdf",
 					fileSize: 2_048_000,
 					fileType: "application/pdf",
 				});
 
-				expect(calls[2][0]).toBe(TrackingEvents.WIZARD_STEP_1_UPLOAD);
-				expect(calls[2][1]).toMatchObject({
+				expect(call2[0]).toBe(TrackingEvents.WIZARD_STEP_1_UPLOAD);
+				expect(call2[1]).toMatchObject({
 					fileName: "doc3.pdf",
 					fileSize: 3_072_000,
 					fileType: "application/pdf",

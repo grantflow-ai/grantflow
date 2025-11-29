@@ -163,7 +163,6 @@ describe("FilePreviewCard", () => {
 			const mockRemoveFile = vi.fn().mockResolvedValue(undefined);
 
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-parent-id",
 				project_id: "test-project",
 				rag_sources: [],

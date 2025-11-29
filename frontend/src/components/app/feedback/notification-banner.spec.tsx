@@ -53,21 +53,30 @@ describe.sequential("NotificationBanner", () => {
 	});
 
 	it("handles different notification types", () => {
-		const notificationTypes: NotificationData["type"][] = ["deadline", "info", "success", "warning"];
+		const notificationTypes: NonNullable<NotificationData["type"]>[] = [
+			"deadline",
+			"error",
+			"info",
+			"success",
+			"warning",
+		];
 
-		notificationTypes.forEach((type) => {
-			const notification = { ...mockNotification, type };
+		for (const type of notificationTypes) {
+			const notification: NotificationData = { ...mockNotification, type };
 			const { unmount } = render(<NotificationBanner notification={notification} />);
 
 			expect(screen.getByTestId("notification-title")).toBeInTheDocument();
 			unmount();
-		});
+		}
 	});
 
 	it("defaults to deadline type when type is not specified", () => {
-		const notificationWithoutType = { ...mockNotification, type: undefined };
+		const notificationWithUndefinedType: NotificationData = {
+			...mockNotification,
+			type: undefined,
+		};
 
-		render(<NotificationBanner notification={notificationWithoutType} />);
+		render(<NotificationBanner notification={notificationWithUndefinedType} />);
 
 		expect(screen.getByTestId("notification-title")).toBeInTheDocument();
 	});

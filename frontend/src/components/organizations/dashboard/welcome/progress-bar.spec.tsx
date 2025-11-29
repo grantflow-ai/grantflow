@@ -24,19 +24,25 @@ describe.sequential("ProgressBar", () => {
 
 	it("highlights current step label", () => {
 		render(<ProgressBar currentStep={2} />);
-		const currentLabel = screen.getByText(WIZARD_STEPS[1]);
+		const [, currentStepLabel] = WIZARD_STEPS;
+		if (!currentStepLabel) throw new Error("Expected WIZARD_STEPS[1] to be defined");
+		const currentLabel = screen.getByText(currentStepLabel);
 		expect(currentLabel).toHaveClass("text-primary");
 	});
 
 	it("shows previous step label as completed color", () => {
 		render(<ProgressBar currentStep={2} />);
-		const previousLabel = screen.getByText(WIZARD_STEPS[0]);
+		const [previousStepLabel] = WIZARD_STEPS;
+		if (!previousStepLabel) throw new Error("Expected WIZARD_STEPS[0] to be defined");
+		const previousLabel = screen.getByText(previousStepLabel);
 		expect(previousLabel).toHaveClass("text-app-dark-blue");
 	});
 
 	it("shows future step label as inactive color", () => {
 		render(<ProgressBar currentStep={1} />);
-		const futureLabel = screen.getByText(WIZARD_STEPS[1]);
+		const [, futureStepLabel] = WIZARD_STEPS;
+		if (!futureStepLabel) throw new Error("Expected WIZARD_STEPS[1] to be defined");
+		const futureLabel = screen.getByText(futureStepLabel);
 		expect(futureLabel).toHaveClass("text-app-gray-400");
 	});
 });

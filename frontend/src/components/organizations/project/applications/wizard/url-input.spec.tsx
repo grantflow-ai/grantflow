@@ -252,7 +252,7 @@ describe.sequential("UrlInput", () => {
 			const user = userEvent.setup();
 			const testUrl = "https://example.com";
 
-			render(<UrlInput parentId={undefined} />);
+			render(<UrlInput />);
 
 			const input = screen.getByLabelText("URL");
 
@@ -684,14 +684,20 @@ describe.sequential("UrlInput", () => {
 				const { calls } = vi.mocked(tracking.trackEvent).mock;
 				expect(calls).toHaveLength(2);
 
-				expect(calls[0][0]).toBe(TrackingEvents.WIZARD_STEP_1_LINK);
-				expect(calls[0][1]).toMatchObject({
+				const [call0, call1] = calls;
+
+				if (!(call0 && call1)) {
+					throw new Error("Expected both calls to be defined");
+				}
+
+				expect(call0[0]).toBe(TrackingEvents.WIZARD_STEP_1_LINK);
+				expect(call0[1]).toMatchObject({
 					domain: "first.com",
 					url: "https://first.com/doc",
 				});
 
-				expect(calls[1][0]).toBe(TrackingEvents.WIZARD_STEP_1_LINK);
-				expect(calls[1][1]).toMatchObject({
+				expect(call1[0]).toBe(TrackingEvents.WIZARD_STEP_1_LINK);
+				expect(call1[1]).toMatchObject({
 					domain: "second.com",
 					url: "https://second.com/paper",
 				});
@@ -744,7 +750,7 @@ describe.sequential("UrlInput", () => {
 					grant_template: {
 						...existingApp.grant_template!,
 						id: "template-123",
-						rag_sources: [{ filename: undefined, sourceId: "1", status: "FINISHED", url: existingUrl }],
+						rag_sources: [{ sourceId: "1", status: "FINISHED", url: existingUrl }],
 					},
 				},
 			});

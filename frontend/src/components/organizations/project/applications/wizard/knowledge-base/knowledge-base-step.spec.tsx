@@ -114,7 +114,6 @@ describe.sequential("KnowledgeBaseStep", () => {
 	describe("Preview Pane Logic", () => {
 		it("shows empty state when no content exists", () => {
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [],
@@ -128,15 +127,13 @@ describe.sequential("KnowledgeBaseStep", () => {
 
 		it("shows container when files are uploaded", () => {
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [
 					RagSourceFactory.build({
 						filename: "test.pdf",
 						sourceId: "file-1",
-						status: "FINISHED",
-						url: undefined,
+						status: "FINISHED" as const,
 					}),
 				],
 			});
@@ -152,14 +149,12 @@ describe.sequential("KnowledgeBaseStep", () => {
 
 		it("shows container when URLs are added", () => {
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [
 					RagSourceFactory.build({
-						filename: undefined,
 						sourceId: "url-1",
-						status: "FINISHED",
+						status: "FINISHED" as const,
 						url: "https://example.com",
 					}),
 				],
@@ -176,7 +171,6 @@ describe.sequential("KnowledgeBaseStep", () => {
 
 		it("shows both sections with separator when both files and URLs exist", () => {
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [
@@ -184,10 +178,8 @@ describe.sequential("KnowledgeBaseStep", () => {
 						filename: "test.pdf",
 						sourceId: "file-1",
 						status: "FINISHED",
-						url: undefined,
 					}),
 					RagSourceFactory.build({
-						filename: undefined,
 						sourceId: "url-1",
 						status: "FINISHED",
 						url: "https://example.com",
@@ -206,7 +198,6 @@ describe.sequential("KnowledgeBaseStep", () => {
 
 		it("does not show container when only application title exists", () => {
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [],
@@ -225,7 +216,6 @@ describe.sequential("KnowledgeBaseStep", () => {
 			const mockRemoveFile = vi.fn();
 
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [
@@ -267,7 +257,6 @@ describe.sequential("KnowledgeBaseStep", () => {
 			const error = new Error("Delete failed");
 
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [
@@ -293,7 +282,6 @@ describe.sequential("KnowledgeBaseStep", () => {
 
 		it("shows error when file has no ID", async () => {
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [
@@ -318,12 +306,10 @@ describe.sequential("KnowledgeBaseStep", () => {
 			const mockRemoveUrl = vi.fn();
 
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [
 					RagSourceFactory.build({
-						filename: undefined,
 						sourceId: "url-1",
 						status: "FINISHED",
 						url: "https://example.com",
@@ -350,7 +336,6 @@ describe.sequential("KnowledgeBaseStep", () => {
 	describe("File Display Logic", () => {
 		it("displays file with correct information", () => {
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [
@@ -372,7 +357,6 @@ describe.sequential("KnowledgeBaseStep", () => {
 
 		it("displays multiple files correctly", () => {
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [
@@ -402,12 +386,10 @@ describe.sequential("KnowledgeBaseStep", () => {
 	describe("URL Display Logic", () => {
 		it("displays URL with correct link", () => {
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [
 					RagSourceFactory.build({
-						filename: undefined,
 						sourceId: "url-1",
 						status: "FINISHED",
 						url: "https://example.com",
@@ -427,7 +409,6 @@ describe.sequential("KnowledgeBaseStep", () => {
 
 		it("displays multiple URLs correctly", () => {
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [
@@ -510,16 +491,13 @@ describe.sequential("KnowledgeBaseStep", () => {
 				project_id: "test-project",
 				rag_sources: [
 					RagSourceFactory.build({
-						filename: undefined,
 						sourceId: "invalid-1",
-						status: "FINISHED",
-						url: undefined,
+						status: "FINISHED" as const,
 					}),
 					RagSourceFactory.build({
 						filename: "valid-file.pdf",
 						sourceId: "file-1",
-						status: "FINISHED",
-						url: undefined,
+						status: "FINISHED" as const,
 					}),
 				],
 			});
@@ -581,7 +559,7 @@ describe.sequential("KnowledgeBaseStep", () => {
 				rag_sources: [
 					RagSourceFactory.build({
 						sourceId: "url-0",
-						status: "FINISHED",
+						status: "FINISHED" as const,
 						url: "https://single.com",
 					}),
 				],
@@ -610,11 +588,13 @@ describe.sequential("KnowledgeBaseStep", () => {
 		});
 
 		it("handles undefined rag_sources", () => {
-			const application = ApplicationFactory.build({
-				id: "test-app-id",
-				project_id: "test-project",
-				rag_sources: undefined,
-			});
+			const application = {
+				...ApplicationFactory.build({
+					id: "test-app-id",
+					project_id: "test-project",
+				}),
+				rag_sources: [],
+			};
 
 			useApplicationStore.setState({ application });
 			render(<KnowledgeBaseStep />);
@@ -626,7 +606,6 @@ describe.sequential("KnowledgeBaseStep", () => {
 	describe("Conditional Logic Edge Cases", () => {
 		it("handles empty application title correctly", () => {
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [],
@@ -641,14 +620,13 @@ describe.sequential("KnowledgeBaseStep", () => {
 
 		it("handles files without size information", () => {
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [
 					RagSourceFactory.build({
 						filename: "test.pdf",
 						sourceId: "file-1",
-						status: "FINISHED",
+						status: "FINISHED" as const,
 					}),
 				],
 			});
@@ -662,7 +640,6 @@ describe.sequential("KnowledgeBaseStep", () => {
 
 		it("does not show container when hasContent is true but no files or URLs exist", () => {
 			const application = ApplicationFactory.build({
-				grant_template: undefined,
 				id: "test-app-id",
 				project_id: "test-project",
 				rag_sources: [],

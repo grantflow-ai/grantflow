@@ -55,8 +55,11 @@ describe("grants", () => {
 				searchParams: expect.any(URLSearchParams),
 			});
 
-			// eslint-disable-next-line prefer-destructuring
-			const searchParams = mockClient.get.mock.calls[0][1].searchParams;
+			const [firstCall] = mockClient.get.mock.calls;
+			if (!firstCall) {
+				throw new Error("Expected mockClient.get to have been called");
+			}
+			const [, { searchParams }] = firstCall;
 			expect(searchParams.toString()).toBe("");
 			expect(result).toEqual(mockGrantsResponse);
 		});
@@ -83,8 +86,11 @@ describe("grants", () => {
 				searchParams: expect.any(URLSearchParams),
 			});
 
-			// eslint-disable-next-line prefer-destructuring
-			const searchParams = mockClient.get.mock.calls[0][1].searchParams;
+			const [firstCall] = mockClient.get.mock.calls;
+			if (!firstCall) {
+				throw new Error("Expected mockClient.get to have been called");
+			}
+			const [, { searchParams }] = firstCall;
 			expect(searchParams.get("search_query")).toBe("medical research");
 			expect(searchParams.get("category")).toBe("healthcare");
 			expect(searchParams.get("min_amount")).toBe("10000");
@@ -104,17 +110,18 @@ describe("grants", () => {
 			const params = {
 				category: null,
 				deadline_after: null,
-				deadline_before: undefined,
 				limit: 10,
 				max_amount: 100_000,
-				min_amount: undefined,
 				search_query: "research",
 			};
 
 			await searchGrants(params);
 
-			// eslint-disable-next-line prefer-destructuring
-			const searchParams = mockClient.get.mock.calls[0][1].searchParams;
+			const [firstCall] = mockClient.get.mock.calls;
+			if (!firstCall) {
+				throw new Error("Expected mockClient.get to have been called");
+			}
+			const [, { searchParams }] = firstCall;
 			expect(searchParams.get("search_query")).toBe("research");
 			expect(searchParams.get("category")).toBeNull();
 			expect(searchParams.get("min_amount")).toBeNull();
@@ -156,8 +163,11 @@ describe("grants", () => {
 				offset: 100,
 			});
 
-			// eslint-disable-next-line prefer-destructuring
-			const searchParams = mockClient.get.mock.calls[0][1].searchParams;
+			const [firstCall] = mockClient.get.mock.calls;
+			if (!firstCall) {
+				throw new Error("Expected mockClient.get to have been called");
+			}
+			const [, { searchParams }] = firstCall;
 			expect(searchParams.get("min_amount")).toBe("0");
 			expect(searchParams.get("max_amount")).toBe("1000000");
 			expect(searchParams.get("limit")).toBe("50");
@@ -317,8 +327,12 @@ describe("grants", () => {
 
 			await createSubscription(mockSubscriptionRequest);
 
-			const calledWith = mockClient.post.mock.calls[0][1].json;
-			expect(calledWith).toEqual(
+			const [firstCall] = mockClient.post.mock.calls;
+			if (!firstCall) {
+				throw new Error("Expected mockClient.post to have been called");
+			}
+			const [, { json }] = firstCall;
+			expect(json).toEqual(
 				expect.objectContaining({
 					email: expect.any(String),
 					search_params: expect.objectContaining({
@@ -423,8 +437,12 @@ describe("grants", () => {
 			const emailWithSpecialChars = "user+test@example.com";
 			await unsubscribe(emailWithSpecialChars);
 
-			const jsonBody = mockClient.post.mock.calls[0][1].json;
-			expect(jsonBody.email).toBe(emailWithSpecialChars);
+			const [firstCall] = mockClient.post.mock.calls;
+			if (!firstCall) {
+				throw new Error("Expected mockClient.post to have been called");
+			}
+			const [, { json }] = firstCall;
+			expect(json.email).toBe(emailWithSpecialChars);
 		});
 	});
 

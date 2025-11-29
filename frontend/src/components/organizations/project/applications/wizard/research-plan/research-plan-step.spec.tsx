@@ -826,8 +826,8 @@ describe.sequential("ResearchPlanStep", () => {
 			await waitFor(() => {
 				const { calls } = vi.mocked(tracking.trackEvent).mock;
 				expect(calls).toHaveLength(1);
-				expect(calls[0][0]).toBe(TrackingEvents.WIZARD_STEP_4_ADD);
-				expect(calls[0][1]).toMatchObject({
+				expect(calls[0]?.[0]).toBe(TrackingEvents.WIZARD_STEP_4_ADD);
+				expect(calls[0]?.[1]).toMatchObject({
 					contentType: "objective",
 					fieldName: "First Objective",
 				});
@@ -848,8 +848,8 @@ describe.sequential("ResearchPlanStep", () => {
 			await waitFor(() => {
 				const { calls } = vi.mocked(tracking.trackEvent).mock;
 				expect(calls).toHaveLength(1);
-				expect(calls[0][0]).toBe(TrackingEvents.WIZARD_STEP_4_ADD);
-				expect(calls[0][1]).toMatchObject({
+				expect(calls[0]?.[0]).toBe(TrackingEvents.WIZARD_STEP_4_ADD);
+				expect(calls[0]?.[1]).toMatchObject({
 					contentType: "objective",
 					fieldName: "Second Objective",
 				});

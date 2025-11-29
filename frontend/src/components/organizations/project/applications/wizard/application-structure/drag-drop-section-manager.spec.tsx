@@ -167,7 +167,10 @@ describe("DragDropSectionManager", () => {
 			render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 			const deleteButtons = screen.getAllByTestId("delete-section-button");
-			fireEvent.click(deleteButtons[0]);
+			const [firstDeleteButton] = deleteButtons;
+			if (firstDeleteButton) {
+				fireEvent.click(firstDeleteButton);
+			}
 
 			expect(dialogRef.current.open).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -188,7 +191,10 @@ describe("DragDropSectionManager", () => {
 			render(<DragDropSectionManager dialogRef={dialogRef} isDetailedSection={mockIsDetailedSection} />);
 
 			const addSubsectionButtons = screen.getAllByTestId("add-subsection-button");
-			fireEvent.click(addSubsectionButtons[0]);
+			const [firstAddSubsectionButton] = addSubsectionButtons;
+			if (firstAddSubsectionButton) {
+				fireEvent.click(firstAddSubsectionButton);
+			}
 
 			expect(mockUpdateGrantSections).toHaveBeenCalledWith(
 				expect.arrayContaining([

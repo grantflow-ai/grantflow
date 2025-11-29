@@ -73,8 +73,8 @@ describe.sequential("EmailSigninForm", () => {
 		expect(termsLinks.length).toBeGreaterThan(0);
 		expect(privacyLinks.length).toBeGreaterThan(0);
 
-		const termsLink = termsLinks[0].closest("a");
-		const privacyLink = privacyLinks[0].closest("a");
+		const termsLink = termsLinks[0]?.closest("a");
+		const privacyLink = privacyLinks[0]?.closest("a");
 
 		expect(termsLink).toHaveAttribute("href", "/terms");
 		expect(termsLink).toHaveAttribute("target", "_blank");
