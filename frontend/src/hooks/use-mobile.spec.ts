@@ -104,7 +104,11 @@ describe("useIsMobile", () => {
 			writable: true,
 		});
 
-		const [[, changeHandler]] = mockMediaQueryList.addEventListener.mock.calls;
+		const [firstCall] = mockMediaQueryList.addEventListener.mock.calls;
+		if (!firstCall) {
+			throw new Error("Expected addEventListener to have been called");
+		}
+		const [, changeHandler] = firstCall;
 		act(() => {
 			changeHandler();
 		});
@@ -129,7 +133,11 @@ describe("useIsMobile", () => {
 			writable: true,
 		});
 
-		const [[, changeHandler]] = mockMediaQueryList.addEventListener.mock.calls;
+		const [firstCall] = mockMediaQueryList.addEventListener.mock.calls;
+		if (!firstCall) {
+			throw new Error("Expected addEventListener to have been called");
+		}
+		const [, changeHandler] = firstCall;
 		act(() => {
 			changeHandler();
 		});
@@ -144,7 +152,11 @@ describe("useIsMobile", () => {
 
 		unmount();
 
-		const [[, addedHandler]] = mockMediaQueryList.addEventListener.mock.calls;
+		const [firstCall] = mockMediaQueryList.addEventListener.mock.calls;
+		if (!firstCall) {
+			throw new Error("Expected addEventListener to have been called");
+		}
+		const [, addedHandler] = firstCall;
 		expect(mockMediaQueryList.removeEventListener).toHaveBeenCalledWith("change", addedHandler);
 	});
 
@@ -225,7 +237,11 @@ describe("useIsMobile", () => {
 
 		renderHook(() => useIsMobile());
 
-		const [[mediaQuery]] = mockMatchMedia.mock.calls;
+		const [firstCall] = mockMatchMedia.mock.calls;
+		if (!firstCall) {
+			throw new Error("Expected matchMedia to have been called");
+		}
+		const [mediaQuery] = firstCall;
 		expect(mediaQuery).toBe("(max-width: 767px)");
 
 		const breakpointFromQuery = Number.parseInt(mediaQuery.match(/\d+/)?.[0] ?? "0", 10);
