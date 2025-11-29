@@ -228,8 +228,8 @@ describe.sequential("ObjectiveComponents", () => {
 
 			const taskFields = screen.getAllByLabelText("Task description");
 
-			await user.clear(taskFields[0]);
-			await user.type(taskFields[0], "UpdatedTask");
+			await user.clear(taskFields[0]!);
+			await user.type(taskFields[0]!, "UpdatedTask");
 
 			expect(taskFields[0]).toHaveValue("UpdatedTask");
 		});
@@ -241,7 +241,7 @@ describe.sequential("ObjectiveComponents", () => {
 			const deleteButtons = screen.getAllByTestId("delete-task-button");
 			const initialTasks = screen.getAllByText(/Task description/);
 
-			await user.click(deleteButtons[0]);
+			await user.click(deleteButtons[0]!);
 
 			const updatedTasks = screen.getAllByText(/Task description/);
 			expect(updatedTasks).toHaveLength(initialTasks.length - 1);

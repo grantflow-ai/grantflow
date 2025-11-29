@@ -188,14 +188,16 @@ describe("SectionWithDropIndicators", () => {
 				GrantSectionFactory.build({ id: "main-2", order: 1, parent_id: null }),
 			];
 
+			const [activeItem, overItem] = sections;
+
 			const dragContext: DragDropContextData = {
 				activeIndex: 0,
-				activeItem: sections[0],
-				dragOverId: sections[1].id,
+				activeItem: activeItem!,
+				dragOverId: overItem!.id,
 				dragOverZone: null,
 				isAnyDragging: true,
 				overIndex: 1,
-				overItem: sections[1],
+				overItem: overItem!,
 				sections,
 				zone: null,
 				zonePercent: null,
@@ -205,7 +207,7 @@ describe("SectionWithDropIndicators", () => {
 
 			render(
 				<RealDragProvider>
-					<SectionWithDropIndicators section={sections[1]}>
+					<SectionWithDropIndicators section={sections[1]!}>
 						<div>Section Content</div>
 					</SectionWithDropIndicators>
 				</RealDragProvider>,
@@ -226,14 +228,16 @@ describe("SectionWithDropIndicators", () => {
 				GrantSectionFactory.build({ id: "main-b", order: 2, parent_id: null }),
 			];
 
+			const [, activeItem, overItem] = sections;
+
 			const dragContext: DragDropContextData = {
 				activeIndex: 1,
-				activeItem: sections[1],
-				dragOverId: sections[2].id,
+				activeItem: activeItem!,
+				dragOverId: overItem!.id,
 				dragOverZone: null,
 				isAnyDragging: true,
 				overIndex: 2,
-				overItem: sections[2],
+				overItem: overItem!,
 				sections,
 				zone: null,
 				zonePercent: null,
@@ -243,7 +247,7 @@ describe("SectionWithDropIndicators", () => {
 
 			render(
 				<RealDragProvider>
-					<SectionWithDropIndicators section={sections[2]}>
+					<SectionWithDropIndicators section={sections[2]!}>
 						<div>Target Section</div>
 					</SectionWithDropIndicators>
 				</RealDragProvider>,
@@ -274,7 +278,7 @@ describe("SectionWithDropIndicators", () => {
 
 			const { unmount } = render(
 				<RealDragProvider>
-					<SectionWithDropIndicators section={sections[0]}>
+					<SectionWithDropIndicators section={sections[0]!}>
 						<div>Content</div>
 					</SectionWithDropIndicators>
 				</RealDragProvider>,

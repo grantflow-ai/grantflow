@@ -134,18 +134,41 @@ export const DuplicateProjectResponseFactory = new Factory<API.DuplicateProject.
 type IndexingStatus = RagSource["status"];
 type RagSource = NonNullable<API.CreateApplication.Http201.ResponseBody["rag_sources"]>[0];
 
-export const RagSourceFactory = new Factory<RagSource>((factory) => {
-	const isFile = factory.datatype.boolean();
-	const status = factory.helpers.arrayElement<IndexingStatus>(["CREATED", "FAILED", "FINISHED", "INDEXING"]);
-	return {
+export const RagSourceFactory = new Factory<RagSource>((factory, _, kwargs) => {
+	const status = factory.helpers.arrayElement<IndexingStatus>([
+		"CREATED",
+		"FAILED",
+		"FINISHED",
+		"INDEXING",
+		"PENDING_UPLOAD",
+	]);
+
+	const hasFilename = kwargs?.filename !== undefined;
+	const hasUrl = kwargs?.url !== undefined;
+	const isKwargsEmptyObject = kwargs !== undefined && Object.keys(kwargs).length === 0;
+
+	let filename: string | undefined;
+	let url: string | undefined;
+
+	if (hasFilename) {
+		({ filename } = kwargs);
+	} else if (hasUrl) {
+		({ url } = kwargs);
+	} else if (!isKwargsEmptyObject) {
+		const shouldGenerateFile = factory.datatype.boolean();
+		if (shouldGenerateFile) {
+			filename = `${factory.lorem.word()}.${factory.helpers.arrayElement(["pdf", "docx", "txt"])}`;
+		} else {
+			url = factory.internet.url();
+		}
+	}
+
+	return stripUndefined({
+		filename,
 		sourceId: factory.string.uuid(),
 		status,
-		...(isFile
-			? {
-					filename: `${factory.lorem.word()}.${factory.helpers.arrayElement(["pdf", "docx", "txt"])}`,
-				}
-			: { url: factory.internet.url() }),
-	};
+		url,
+	});
 });
 
 type GrantingInstitution = NonNullable<
@@ -725,12 +748,12 @@ export const UpdateMemberRoleRequestFactory = new Factory<API.UpdateProjectMembe
 
 type ApplicationCardData = API.ListApplications.Http200.ResponseBody["applications"][0];
 
-export const ApplicationCardDataFactory = new Factory<ApplicationCardData>((factory) =>
+export const ApplicationCardDataFactory = new Factory<ApplicationCardData>((factory, _, kwargs) =>
 	stripUndefined({
 		completed_at: factory.helpers.maybe(() => factory.date.past().toISOString()) ?? undefined,
 		created_at: factory.date.past().toISOString(),
 		deadline: factory.helpers.maybe(() => factory.date.future().toISOString()) ?? undefined,
-		description: factory.helpers.maybe(() => factory.lorem.paragraph()) ?? undefined,
+		description: kwargs?.description ?? undefined,
 		id: factory.string.uuid(),
 		project_id: factory.string.uuid(),
 		status: factory.helpers.arrayElement<ApplicationStatus>([

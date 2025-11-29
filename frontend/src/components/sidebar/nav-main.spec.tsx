@@ -166,14 +166,14 @@ describe("NavMain", () => {
 			);
 			await userEvent.click(screen.getByTestId("recent-applications-trigger"));
 			const [application] = mockApplications.applications;
-			await screen.findByText(application.title);
-			await userEvent.click(screen.getByTestId(`recent-application-${application.id}`));
+			await screen.findByText(application?.title ?? "");
+			await userEvent.click(screen.getByTestId(`recent-application-${application?.id}`));
 
 			expect(navigateToApplicationSpy).toHaveBeenCalledWith(
 				"test-project-id",
 				"Test Project",
-				application.id,
-				application.title,
+				application?.id,
+				application?.title,
 			);
 		});
 	});

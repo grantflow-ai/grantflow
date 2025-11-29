@@ -100,6 +100,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						grant_sections: [],
 						rag_sources: [],
 					}),
+					text: "",
 				},
 			});
 			render(<WizardFooter />);
@@ -614,6 +615,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						team_excellence: "Test team excellence",
 						type: "RESEARCH",
 					},
+					text: "",
 				},
 			});
 
@@ -737,6 +739,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						team_excellence: "Team excellence text",
 						type: "RESEARCH",
 					},
+					text: "",
 				},
 			});
 

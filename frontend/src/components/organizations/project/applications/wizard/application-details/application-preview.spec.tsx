@@ -295,7 +295,10 @@ describe("ApplicationPreview", () => {
 			}),
 		];
 		const mockTemplate = GrantTemplateFactory.build({ rag_sources: mockSources });
-		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
+		const mockApplication = ApplicationFactory.build({
+			grant_template: mockTemplate,
+			rag_sources: [],
+		});
 
 		useApplicationStore.setState({ application: mockApplication });
 
@@ -562,7 +565,10 @@ describe("ApplicationPreview", () => {
 		});
 
 		it("does not show banner when grant sections is undefined", () => {
-			const mockTemplate = GrantTemplateFactory.build({ rag_sources: [] });
+			const mockTemplate = {
+				...GrantTemplateFactory.build({ rag_sources: [] }),
+				grant_sections: [],
+			};
 			const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
 
 			useApplicationStore.setState({ application: mockApplication });

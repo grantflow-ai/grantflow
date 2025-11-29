@@ -48,7 +48,7 @@ export function useOrganizationValidation(
 		};
 
 		if (organizations.length === 0) {
-			handleNoOrganizations(actions, selectedOrganizationId, storeOrgId, organizationsSet);
+			handleNoOrganizations(actions, selectedOrganizationId ?? null, storeOrgId ?? null, organizationsSet);
 			return;
 		}
 

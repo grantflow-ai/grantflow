@@ -63,15 +63,18 @@ describe.sequential("FilesDisplay", () => {
 
 		expect(screen.getByTestId("files-display")).toBeInTheDocument();
 		expect(screen.getByTestId("files-scroll-area")).toBeInTheDocument();
-		expect(screen.getByTestId(`file-card-${mockFiles[0].name}`)).toBeInTheDocument();
-		expect(screen.getByTestId(`file-card-${mockFiles[1].name}`)).toBeInTheDocument();
+		expect(screen.getByTestId(`file-card-${mockFiles[0]?.name}`)).toBeInTheDocument();
+		expect(screen.getByTestId(`file-card-${mockFiles[1]?.name}`)).toBeInTheDocument();
 	});
 
 	it("calls onFileRemoved with the correct file when remove button is clicked", () => {
 		render(<FilesDisplay files={mockFiles} onFileRemoved={mockOnFileRemoved} />);
 
 		const removeButtons = screen.getAllByTestId("remove-file-button");
-		fireEvent.click(removeButtons[0]);
+		const [firstButton] = removeButtons;
+		if (firstButton) {
+			fireEvent.click(firstButton);
+		}
 
 		expect(mockOnFileRemoved).toHaveBeenCalledTimes(1);
 		expect(mockOnFileRemoved).toHaveBeenCalledWith(mockFiles[0]);

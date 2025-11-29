@@ -69,14 +69,13 @@ export function ProjectSidebar({
 	};
 
 	if (isCollapsed) {
-		const collapsedProps: CollapsedSidebarProps = {
-			onLogout: handleLogout,
+		const collapsedProps = buildCollapsedProps(
 			pathname,
-		};
-		if (isCreatingApplication) collapsedProps.isCreatingApplication = isCreatingApplication;
-		if (onCreateApplication !== undefined) collapsedProps.onCreateApplication = onCreateApplication;
-		if (onExpand !== undefined) collapsedProps.onExpand = onExpand;
-
+			handleLogout,
+			isCreatingApplication,
+			onCreateApplication,
+			onExpand,
+		);
 		return <CollapsedSidebar {...collapsedProps} />;
 	}
 
@@ -198,7 +197,7 @@ export function ProjectSidebar({
 							>
 								Account Setting
 							</Link>
-							{(userRole === UserRole.OWNER || userRole === UserRole.ADMIN) && (
+							{isAdminOrOwner(userRole) && (
 								<>
 									<Link
 										className={cn(
@@ -255,6 +254,23 @@ export function ProjectSidebar({
 			</div>
 		</div>
 	);
+}
+
+function buildCollapsedProps(
+	pathname: string,
+	handleLogout: () => void,
+	isCreatingApplication?: boolean,
+	onCreateApplication?: () => void,
+	onExpand?: () => void,
+): CollapsedSidebarProps {
+	const collapsedProps: CollapsedSidebarProps = {
+		onLogout: handleLogout,
+		pathname,
+	};
+	if (isCreatingApplication) collapsedProps.isCreatingApplication = isCreatingApplication;
+	if (onCreateApplication !== undefined) collapsedProps.onCreateApplication = onCreateApplication;
+	if (onExpand !== undefined) collapsedProps.onExpand = onExpand;
+	return collapsedProps;
 }
 
 function CollapsedSidebar({
@@ -351,4 +367,8 @@ function CollapsedSidebar({
 			</div>
 		</div>
 	);
+}
+
+function isAdminOrOwner(userRole: UserRole): boolean {
+	return userRole === UserRole.OWNER || userRole === UserRole.ADMIN;
 }
