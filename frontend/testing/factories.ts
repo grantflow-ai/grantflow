@@ -143,24 +143,17 @@ export const RagSourceFactory = new Factory<RagSource>((factory, _, kwargs) => {
 		"PENDING_UPLOAD",
 	]);
 
-	const hasFilename = kwargs?.filename !== undefined;
-	const hasUrl = kwargs?.url !== undefined;
 	const isKwargsEmptyObject = kwargs !== undefined && Object.keys(kwargs).length === 0;
+	const hasKwargsFilename = !isKwargsEmptyObject && kwargs?.filename !== undefined;
+	const hasKwargsUrl = !isKwargsEmptyObject && kwargs?.url !== undefined;
 
 	let filename: string | undefined;
 	let url: string | undefined;
 
-	if (hasFilename) {
+	if (hasKwargsFilename) {
 		({ filename } = kwargs);
-	} else if (hasUrl) {
+	} else if (hasKwargsUrl) {
 		({ url } = kwargs);
-	} else if (!isKwargsEmptyObject) {
-		const shouldGenerateFile = factory.datatype.boolean();
-		if (shouldGenerateFile) {
-			filename = `${factory.lorem.word()}.${factory.helpers.arrayElement(["pdf", "docx", "txt"])}`;
-		} else {
-			url = factory.internet.url();
-		}
 	}
 
 	return stripUndefined({

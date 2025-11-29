@@ -559,7 +559,7 @@ describe.sequential("KnowledgeBaseStep", () => {
 				rag_sources: [
 					RagSourceFactory.build({
 						sourceId: "url-0",
-						status: "FINISHED",
+						status: "FINISHED" as const,
 						url: "https://single.com",
 					}),
 				],
@@ -626,7 +626,7 @@ describe.sequential("KnowledgeBaseStep", () => {
 					RagSourceFactory.build({
 						filename: "test.pdf",
 						sourceId: "file-1",
-						status: "FINISHED",
+						status: "FINISHED" as const,
 					}),
 				],
 			});
