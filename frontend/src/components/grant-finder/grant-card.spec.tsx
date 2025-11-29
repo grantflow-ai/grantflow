@@ -263,7 +263,7 @@ describe.sequential("GrantCard", () => {
 		it("displays 'Amount varies' when neither min nor max are provided", () => {
 			const baseGrant = GrantFactory.build();
 			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit amount_min and amount_max
-			const { amount_min, amount_max, ...grant } = baseGrant;
+			const { amount_max, amount_min, ...grant } = baseGrant;
 			render(<GrantCard grant={grant as typeof baseGrant} />);
 
 			expect(screen.getByTestId("grant-funding")).toHaveTextContent("Amount varies");

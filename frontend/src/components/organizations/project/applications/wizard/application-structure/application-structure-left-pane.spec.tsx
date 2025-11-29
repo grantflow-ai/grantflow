@@ -82,8 +82,8 @@ describe("ApplicationStructureLeftPane", () => {
 
 	it("renders document cards when template has file sources", () => {
 		const mockSources = [
-			RagSourceFactory.build({ filename: "grant-guide.pdf", url: undefined }),
-			RagSourceFactory.build({ filename: "requirements.docx", url: undefined }),
+			RagSourceFactory.build({ filename: "grant-guide.pdf" }),
+			RagSourceFactory.build({ filename: "requirements.docx" }),
 		];
 		const mockTemplate = GrantTemplateFactory.build({
 			grant_sections: [GrantSectionFactory.build()],
@@ -105,8 +105,8 @@ describe("ApplicationStructureLeftPane", () => {
 
 	it("renders link cards when template has URL sources", () => {
 		const mockSources = [
-			RagSourceFactory.build({ filename: undefined, url: "https://example.com/grant1" }),
-			RagSourceFactory.build({ filename: undefined, url: "https://example.com/grant2" }),
+			RagSourceFactory.build({ url: "https://example.com/grant1" }),
+			RagSourceFactory.build({ url: "https://example.com/grant2" }),
 		];
 		const mockTemplate = GrantTemplateFactory.build({
 			grant_sections: [GrantSectionFactory.build()],
@@ -131,8 +131,8 @@ describe("ApplicationStructureLeftPane", () => {
 			grant_sections: [GrantSectionFactory.build()],
 			id: "template-123",
 			rag_sources: [
-				RagSourceFactory.build({ filename: "test.pdf", url: undefined }),
-				RagSourceFactory.build({ filename: undefined, url: "https://example.com" }),
+				RagSourceFactory.build({ filename: "test.pdf" }),
+				RagSourceFactory.build({ url: "https://example.com" }),
 			],
 		});
 		const mockApplication = ApplicationFactory.build({ grant_template: mockTemplate });
@@ -212,9 +212,9 @@ describe("ApplicationStructureLeftPane", () => {
 
 	it("filters out sources without filename or URL", () => {
 		const mockSources = [
-			RagSourceFactory.build({ filename: "valid.pdf", url: undefined }),
-			RagSourceFactory.build({ filename: undefined, url: undefined }),
-			RagSourceFactory.build({ filename: undefined, url: "https://example.com" }),
+			RagSourceFactory.build({ filename: "valid.pdf" }),
+			RagSourceFactory.build({}),
+			RagSourceFactory.build({ url: "https://example.com" }),
 		];
 		const mockTemplate = GrantTemplateFactory.build({
 			grant_sections: [GrantSectionFactory.build()],

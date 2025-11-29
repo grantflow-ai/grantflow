@@ -155,7 +155,6 @@ describe("DraggableTaskItem", () => {
 		it("shows only title when description is undefined", () => {
 			const taskWithUndefinedDescription = {
 				...mockTask,
-				description: undefined,
 			};
 
 			render(
@@ -368,9 +367,12 @@ describe("DraggableTaskItem", () => {
 		it("handles missing onValueChange gracefully", async () => {
 			const user = userEvent.setup();
 
+			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit onValueChange
+			const { onValueChange, ...propsWithoutOnValueChange } = defaultProps;
+
 			render(
 				<TestWrapper>
-					<DraggableTaskItem {...defaultProps} isEditing={true} onValueChange={undefined} />
+					<DraggableTaskItem {...propsWithoutOnValueChange} isEditing={true} />
 				</TestWrapper>,
 			);
 
@@ -382,9 +384,12 @@ describe("DraggableTaskItem", () => {
 		it("handles missing onTaskDelete gracefully", async () => {
 			const user = userEvent.setup();
 
+			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit onTaskDelete
+			const { onTaskDelete, ...propsWithoutOnTaskDelete } = defaultProps;
+
 			render(
 				<TestWrapper>
-					<DraggableTaskItem {...defaultProps} isEditing={true} onTaskDelete={undefined} />
+					<DraggableTaskItem {...propsWithoutOnTaskDelete} isEditing={true} />
 				</TestWrapper>,
 			);
 

@@ -431,7 +431,6 @@ describe("RagNotificationHandler", () => {
 	describe("Info Toast Fallback", () => {
 		it("does not display info toast for unknown event types that are not NotificationEvents", () => {
 			const notification: RagProcessingStatusMessage = {
-				application_data: undefined,
 				data: {
 					custom_field: "value",
 				},
@@ -483,7 +482,7 @@ describe("RagNotificationHandler", () => {
 				};
 
 				const notification = RagProcessingStatusMessageFactory.build({
-					data: eventData[event as RagEvent],
+					data: eventData[event as RagEvent] ?? {},
 					event: event as RagEvent,
 					type: "success",
 				});

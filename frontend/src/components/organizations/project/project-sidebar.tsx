@@ -69,15 +69,15 @@ export function ProjectSidebar({
 	};
 
 	if (isCollapsed) {
-		return (
-			<CollapsedSidebar
-				isCreatingApplication={isCreatingApplication}
-				{...(onCreateApplication !== undefined && { onCreateApplication })}
-				{...(onExpand !== undefined && { onExpand })}
-				onLogout={handleLogout}
-				pathname={pathname}
-			/>
-		);
+		const collapsedProps: CollapsedSidebarProps = {
+			onLogout: handleLogout,
+			pathname,
+		};
+		if (isCreatingApplication) collapsedProps.isCreatingApplication = isCreatingApplication;
+		if (onCreateApplication !== undefined) collapsedProps.onCreateApplication = onCreateApplication;
+		if (onExpand !== undefined) collapsedProps.onExpand = onExpand;
+
+		return <CollapsedSidebar {...collapsedProps} />;
 	}
 
 	return (

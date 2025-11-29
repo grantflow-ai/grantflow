@@ -110,7 +110,8 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 				delete newTasks[taskId];
 
 				if (Object.keys(newTasks).length === 0) {
-					const { tasks: _, ...remainingErrors } = prev;
+					// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit tasks
+					const { tasks, ...remainingErrors } = prev;
 					return remainingErrors;
 				}
 
