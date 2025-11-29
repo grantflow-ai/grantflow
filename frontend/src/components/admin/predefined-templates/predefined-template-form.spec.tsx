@@ -30,7 +30,10 @@ const institutions: API.ListGrantingInstitutions.Http200.ResponseBody = [
 const renderForm = (
 	mode: PredefinedTemplateFormMode,
 	initialTemplate?: API.GetGrantingInstitutionPredefinedTemplate.Http200.ResponseBody,
-) => render(<PredefinedTemplateForm initialTemplate={initialTemplate} institutions={institutions} mode={mode} />);
+) => {
+	const props = initialTemplate ? { initialTemplate, institutions, mode } : { institutions, mode };
+	return render(<PredefinedTemplateForm {...props} />);
+};
 
 describe("PredefinedTemplateForm", () => {
 	beforeEach(() => {
@@ -55,10 +58,10 @@ describe("PredefinedTemplateForm", () => {
 			expect(mockCreate).toHaveBeenCalled();
 		});
 
-		const [[payload]] = mockCreate.mock.calls;
-		expect(payload.name).toBe("NIH R21 Template");
-		expect(payload.activity_code).toBe("R21");
-		expect(payload.grant_sections.length).toBeGreaterThan(0);
+		const payload = mockCreate.mock.calls[0]?.[0];
+		expect(payload?.name).toBe("NIH R21 Template");
+		expect(payload?.activity_code).toBe("R21");
+		expect(payload?.grant_sections.length).toBeGreaterThan(0);
 	});
 
 	it("updates an existing template", async () => {

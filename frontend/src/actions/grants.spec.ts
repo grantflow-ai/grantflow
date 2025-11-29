@@ -104,10 +104,8 @@ describe("grants", () => {
 			const params = {
 				category: null,
 				deadline_after: null,
-				deadline_before: undefined,
 				limit: 10,
 				max_amount: 100_000,
-				min_amount: undefined,
 				search_query: "research",
 			};
 
