@@ -134,7 +134,7 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 						setFullName(e.target.value);
 						if (errors.fullName) {
 							setErrors((prev) => {
-								const nextErrors = { ...prev, fullName: undefined };
+								const { fullName: _, ...nextErrors } = prev;
 								return nextErrors;
 							});
 						}
@@ -168,7 +168,7 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 						setAbbreviation(e.target.value);
 						if (errors.abbreviation) {
 							setErrors((prev) => {
-								const nextErrors = { ...prev, abbreviation: undefined };
+								const { abbreviation: _, ...nextErrors } = prev;
 								return nextErrors;
 							});
 						}
