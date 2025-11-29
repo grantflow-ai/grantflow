@@ -193,14 +193,15 @@ export function OrganizationSettingsMembers({
 	);
 
 	const handleInvite = async ({ email, hasAllProjectsAccess, projectIds, role }: InviteOptions) => {
-		const payload = {
+		const inviteRole: "admin" | "member" = role === "ADMIN" ? "admin" : "member";
+		const payload: Parameters<typeof inviteOrganizationMember>[0] = {
 			email,
 			inviterName: user?.displayName ?? "Team Member",
 			organizationId,
 			organizationName: organization?.name ?? "",
-			role: role === "ADMIN" ? "admin" : "member",
-			...(hasAllProjectsAccess === undefined ? {} : { hasAllProjectsAccess }),
-			...(projectIds === undefined ? {} : { projectIds }),
+			role: inviteRole,
+			...(hasAllProjectsAccess !== undefined && { hasAllProjectsAccess }),
+			...(projectIds !== undefined && { projectIds }),
 		};
 
 		try {
