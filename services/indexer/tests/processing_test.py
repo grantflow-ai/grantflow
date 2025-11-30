@@ -54,8 +54,13 @@ async def test_process_source_text_file(
         new_callable=AsyncMock,
         return_value=[mock_vector_dto],
     )
+    mocker.patch(
+        "services.indexer.src.processing.analyze_scientific_content",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
 
-    vectors, text_content, metadata = await process_source(
+    vectors, text_content, metadata, _scientific_analysis = await process_source(
         content=b"Test file content",
         source_id="test-source-id",
         filename="test.txt",
@@ -107,8 +112,13 @@ async def test_process_source_pdf_file(
         new_callable=AsyncMock,
         return_value=[mock_vector_dto],
     )
+    mocker.patch(
+        "services.indexer.src.processing.analyze_scientific_content",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
 
-    vectors, text_content, _metadata = await process_source(
+    vectors, text_content, _metadata, _scientific_analysis = await process_source(
         content=b"PDF binary content",
         source_id="pdf-source-id",
         filename="document.pdf",
@@ -159,8 +169,13 @@ async def test_process_source_multiple_chunks(
         new_callable=AsyncMock,
         return_value=vectors,
     )
+    mocker.patch(
+        "services.indexer.src.processing.analyze_scientific_content",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
 
-    result_vectors, text_content, _metadata = await process_source(
+    result_vectors, text_content, _metadata, _scientific_analysis = await process_source(
         content=b"Long document content",
         source_id="multi-source-id",
         filename="long-document.txt",
@@ -204,8 +219,13 @@ async def test_process_source_json_content(
         "services.indexer.src.processing.serialize",
         return_value=b'{"key":"value","nested":{"data":"test"}}',
     )
+    mocker.patch(
+        "services.indexer.src.processing.analyze_scientific_content",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
 
-    vectors, text_content, _metadata = await process_source(
+    vectors, text_content, _metadata, _scientific_analysis = await process_source(
         content=b'{"key":"value","nested":{"data":"test"}}',
         source_id="json-source-id",
         filename="data.json",
@@ -239,8 +259,13 @@ async def test_process_source_empty_content(
         new_callable=AsyncMock,
         return_value=[],
     )
+    mocker.patch(
+        "services.indexer.src.processing.analyze_scientific_content",
+        new_callable=AsyncMock,
+        return_value=None,
+    )
 
-    vectors, text_content, _metadata = await process_source(
+    vectors, text_content, _metadata, _scientific_analysis = await process_source(
         content=b"",
         source_id="empty-source-id",
         filename="empty.txt",
