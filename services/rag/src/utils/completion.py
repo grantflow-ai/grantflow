@@ -186,6 +186,7 @@ async def make_google_completions_request[T](
     trace_id: str,
     timeout: float = 300,
     thinking_budget: int | None = None,
+    thinking_level: str | None = None,
 ) -> T:
     client = get_google_ai_client()
 
@@ -218,9 +219,11 @@ async def make_google_completions_request[T](
         ),
     ]
 
-    thinking_config = (
-        genai.types.ThinkingConfig(thinking_budget=thinking_budget) if thinking_budget is not None else None
-    )
+    thinking_config = None
+    if thinking_level is not None:
+        thinking_config = genai.types.ThinkingConfig(thinking_level=thinking_level)  # type: ignore[call-arg]
+    elif thinking_budget is not None:
+        thinking_config = genai.types.ThinkingConfig(thinking_budget=thinking_budget)
 
     config = genai.types.GenerateContentConfig(
         response_mime_type=CONTENT_TYPE_JSON,
@@ -498,7 +501,7 @@ def format_error_for_llm(error: Exception) -> str:
     return f"Error ({type(error).__name__}): {error!s}"
 
 
-async def handle_completions_request[T](  # noqa: PLR0912
+async def handle_completions_request[T](  # noqa: PLR0912, PLR0913
     *,
     max_attempts: int = 3,
     messages: str | list[str],
@@ -515,6 +518,7 @@ async def handle_completions_request[T](  # noqa: PLR0912
     timeout: float = 300,  # 5 minutes timeout for LLM API calls ~keep
     trace_id: str,
     thinking_budget: int | None = 4500,
+    thinking_level: str | None = None,
 ) -> T:
     attempts = 0
 
@@ -562,6 +566,7 @@ async def handle_completions_request[T](  # noqa: PLR0912
                     trace_id=trace_id,
                     timeout=timeout,
                     thinking_budget=thinking_budget,
+                    thinking_level=thinking_level,
                 )
 
             if validator:

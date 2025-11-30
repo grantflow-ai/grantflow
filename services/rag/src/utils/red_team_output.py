@@ -16,6 +16,7 @@ from packages.shared_utils.src.logger import get_logger
 
 if TYPE_CHECKING:
     from packages.db.src.json_objects import GrantElement, GrantLongFormSection
+    from packages.shared_utils.src.scientific_analysis import ScientificAnalysisResult
 
     from services.rag.src.dto import (
         EditorialStatsDTO,
@@ -354,3 +355,404 @@ def save_editorial_workflow_output(
     )
 
     return output_path
+
+
+def save_scientific_analysis_output(
+    *,
+    source_id: str,
+    source_filename: str,
+    analysis_result: ScientificAnalysisResult,
+    output_dir: str | None = None,
+) -> Path:
+    """
+    ~keep
+    Save scientific analysis output for a source document.
+
+    Args:
+        source_id: UUID of the source document
+        source_filename: Original filename of the source
+        analysis_result: Complete scientific analysis result
+        output_dir: Optional custom output directory
+
+    Returns:
+        Path to the saved analysis file
+    """
+    if output_dir is None:
+        base_dir = Path(__file__).parents[4] / "testing" / "results" / "scientific_analysis"
+    else:
+        base_dir = Path(output_dir)
+
+    timestamp = datetime.now(UTC)
+    date_dir = base_dir / timestamp.strftime("%Y-%m-%d")
+    date_dir.mkdir(parents=True, exist_ok=True)
+
+    safe_filename = "".join(c if c.isalnum() or c in (" ", "-", "_", ".") else "" for c in source_filename)
+    safe_filename = safe_filename.replace(" ", "_").lower()[:50]
+    filename = f"{safe_filename}_analysis_{timestamp.strftime('%Y%m%d_%H%M%S')}.txt"
+    output_path = date_dir / filename
+
+    metadata = analysis_result["metadata"]
+
+    lines = [
+        "=" * 80,
+        "SCIENTIFIC ANALYSIS OUTPUT",
+        "=" * 80,
+        "",
+        f"Source ID: {source_id}",
+        f"Source File: {source_filename}",
+        f"Generated: {timestamp.isoformat()}",
+        f"Article Type: {metadata['article_type']}",
+        "",
+        "--- ELEMENT COUNTS ---",
+        f"Arguments: {metadata['total_arguments']}",
+        f"Evidence: {metadata['total_evidence']}",
+        f"Hypotheses: {metadata['total_hypotheses']}",
+        f"Conclusions: {metadata['total_conclusions']}",
+        f"Experiment Results: {metadata['total_results']}",
+        f"Sources: {metadata['total_sources']}",
+        f"Objectives: {metadata['total_objectives']}",
+        f"Tasks: {metadata['total_tasks']}",
+        "",
+        "=" * 80,
+        "ARGUMENTS",
+        "=" * 80,
+    ]
+
+    for arg in analysis_result["arguments"]:
+        pivot_marker = " [PIVOT]" if arg.get("pivot", False) else ""
+        lines.extend(
+            [
+                "",
+                f"--- Argument {arg['id']}{pivot_marker} ---",
+                f"Type: {arg['type']} | Source: {arg['source']} | Rhetorical: {arg['rhetorical_action']}",
+                f"Temporal: {arg['temporal_context']} (order: {arg['temporal_order']}) | Hierarchy: {arg['hierarchy']}",
+                f"Context: {arg['context']}",
+                f"Text: {arg['text']}",
+            ]
+        )
+
+    lines.extend(
+        [
+            "",
+            "=" * 80,
+            "EVIDENCE",
+            "=" * 80,
+        ]
+    )
+
+    for ev in analysis_result["evidence"]:
+        pivot_marker = " [PIVOT]" if ev.get("pivot", False) else ""
+        lines.extend(
+            [
+                "",
+                f"--- Evidence {ev['id']}{pivot_marker} ---",
+                f"Type: {ev['type']} | Source: {ev['source']} | Rhetorical: {ev['rhetorical_action']}",
+                f"Temporal: {ev['temporal_context']} (order: {ev['temporal_order']}) | Hierarchy: {ev['hierarchy']}",
+                f"Supports: {ev['supports']}",
+                f"Text: {ev['text']}",
+            ]
+        )
+
+    lines.extend(
+        [
+            "",
+            "=" * 80,
+            "HYPOTHESES",
+            "=" * 80,
+        ]
+    )
+
+    for hyp in analysis_result["hypotheses"]:
+        pivot_marker = " [PIVOT]" if hyp.get("pivot", False) else ""
+        lines.extend(
+            [
+                "",
+                f"--- Hypothesis {hyp['id']}{pivot_marker} ---",
+                f"Type: {hyp['type']} | Source: {hyp['source']} | Rhetorical: {hyp['rhetorical_action']}",
+                f"Temporal: {hyp['temporal_context']} (order: {hyp['temporal_order']}) | Hierarchy: {hyp['hierarchy']}",
+                f"Testable: {hyp['testable']}",
+                f"Text: {hyp['text']}",
+            ]
+        )
+
+    lines.extend(
+        [
+            "",
+            "=" * 80,
+            "CONCLUSIONS",
+            "=" * 80,
+        ]
+    )
+
+    for conc in analysis_result["conclusions"]:
+        pivot_marker = " [PIVOT]" if conc.get("pivot", False) else ""
+        lines.extend(
+            [
+                "",
+                f"--- Conclusion {conc['id']}{pivot_marker} ---",
+                f"Type: {conc['type']} | Source: {conc['source']} | Rhetorical: {conc['rhetorical_action']}",
+                f"Temporal: {conc['temporal_context']} (order: {conc['temporal_order']}) | Hierarchy: {conc['hierarchy']}",
+                f"Based On: {conc['based_on']}",
+                f"Text: {conc['text']}",
+            ]
+        )
+
+    lines.extend(
+        [
+            "",
+            "=" * 80,
+            "EXPERIMENT RESULTS",
+            "=" * 80,
+        ]
+    )
+
+    for res in analysis_result["experiment_results"]:
+        pivot_marker = " [PIVOT]" if res.get("pivot", False) else ""
+        lines.extend(
+            [
+                "",
+                f"--- Result {res['id']}{pivot_marker} ---",
+                f"Source: {res['source']} | Rhetorical: {res['rhetorical_action']}",
+                f"Temporal: {res['temporal_context']} (order: {res['temporal_order']}) | Hierarchy: {res['hierarchy']}",
+                f"Experiment: {res['experiment']}",
+                f"Outcome: {res['outcome']}",
+                f"Significance: {res.get('significance', 'N/A')}",
+                f"Text: {res['text']}",
+            ]
+        )
+
+    lines.extend(
+        [
+            "",
+            "=" * 80,
+            "OBJECTIVES",
+            "=" * 80,
+        ]
+    )
+
+    for obj in analysis_result["objectives"]:
+        lines.extend(
+            [
+                "",
+                f"--- Objective {obj['id']} ({obj['hierarchy']}) ---",
+                f"Type: {obj['type']} | Temporal Order: {obj['temporal_order']}",
+                f"Scope: {obj['scope']}",
+                f"Expected Outcome: {obj['expected_outcome']}",
+                f"Text: {obj['text']}",
+            ]
+        )
+
+    lines.extend(
+        [
+            "",
+            "=" * 80,
+            "TASKS (with dependencies)",
+            "=" * 80,
+        ]
+    )
+
+    for task in analysis_result["tasks"]:
+        deps = task["depends_on"]
+        deps_str = ", ".join(str(d) for d in deps) if deps else "None"
+        lines.extend(
+            [
+                "",
+                f"--- Task {task['id']} ({task['hierarchy']}) ---",
+                f"Supports Objective: {task['supports_objective']} | Temporal Order: {task['temporal_order']}",
+                f"Depends On: [{deps_str}]",
+                f"Action: {task['action']}",
+                f"Deliverable: {task['deliverable']}",
+                f"Text: {task['text']}",
+            ]
+        )
+
+    lines.extend(
+        [
+            "",
+            "=" * 80,
+            "SOURCES/CITATIONS",
+            "=" * 80,
+        ]
+    )
+
+    for src in analysis_result["sources"]:
+        lines.extend(
+            [
+                "",
+                f"--- Source {src['id']} ---",
+                f"Type: {src['type']}",
+                f"Relevance: {src['relevance']}",
+                f"Text: {src['text']}",
+            ]
+        )
+
+    lines.extend(
+        [
+            "",
+            "=" * 80,
+            "END OF ANALYSIS",
+            "=" * 80,
+        ]
+    )
+
+    content = "\n".join(lines)
+
+    try:
+        output_path.write_text(content, encoding="utf-8")
+    except (PermissionError, OSError) as e:
+        logger.error(
+            "Failed to write scientific analysis output",
+            source_id=source_id,
+            output_path=str(output_path),
+            error=str(e),
+        )
+        raise
+
+    logger.info(
+        "Saved scientific analysis output",
+        source_id=source_id,
+        source_filename=source_filename,
+        output_path=str(output_path),
+        arguments=metadata["total_arguments"],
+        evidence=metadata["total_evidence"],
+        objectives=metadata["total_objectives"],
+        tasks=metadata["total_tasks"],
+    )
+
+    return output_path
+
+
+def save_comparison_output(
+    *,
+    baseline_text: str,
+    with_analysis_text: str,
+    scenario_name: str,
+    analysis_stats: dict[str, int | list[dict[str, str]]] | None = None,
+    output_dir: str | None = None,
+) -> tuple[Path, Path]:
+    """
+    ~keep
+    Save before/after comparison MD files for domain expert review.
+
+    Args:
+        baseline_text: Work plan text generated WITHOUT argument_structure
+        with_analysis_text: Work plan text generated WITH argument_structure
+        scenario_name: Name of the scenario being tested
+        analysis_stats: Optional statistics about the scientific analysis (counts, etc.)
+        output_dir: Optional custom output directory
+
+    Returns:
+        Tuple of (baseline_path, with_analysis_path)
+    """
+    if output_dir is None:
+        base_dir = Path(__file__).parents[4] / "testing" / "results" / "comparison"
+    else:
+        base_dir = Path(output_dir)
+
+    timestamp = datetime.now(UTC)
+    date_dir = base_dir / timestamp.strftime("%Y-%m-%d")
+    date_dir.mkdir(parents=True, exist_ok=True)
+
+    safe_name = "".join(c if c.isalnum() or c in (" ", "-", "_") else "" for c in scenario_name)
+    safe_name = safe_name.replace(" ", "_").lower()[:40]
+    timestamp_str = timestamp.strftime("%Y%m%d_%H%M%S")
+
+    # Save baseline (WITHOUT argument_structure)
+    baseline_filename = f"{safe_name}_BASELINE_{timestamp_str}.md"
+    baseline_path = date_dir / baseline_filename
+
+    baseline_word_count = len(baseline_text.split())
+    baseline_header = f"""---
+# BASELINE OUTPUT (Without Argument Structure)
+
+**Scenario**: {scenario_name}
+**Generated**: {timestamp.isoformat()}
+**Mode**: BASELINE (argument_structure=None)
+**Word Count**: {baseline_word_count:,}
+
+---
+
+> **Note**: This output was generated WITHOUT the scientific analysis argument structure.
+> Compare this with the WITH_ANALYSIS version to evaluate the impact of structured analysis.
+
+---
+
+"""
+    baseline_content = baseline_header + baseline_text
+
+    try:
+        baseline_path.write_text(baseline_content, encoding="utf-8")
+    except (PermissionError, OSError) as e:
+        logger.error(
+            "Failed to write baseline comparison output",
+            scenario_name=scenario_name,
+            output_path=str(baseline_path),
+            error=str(e),
+        )
+        raise
+
+    # Save WITH argument_structure
+    with_analysis_filename = f"{safe_name}_WITH_ANALYSIS_{timestamp_str}.md"
+    with_analysis_path = date_dir / with_analysis_filename
+
+    with_analysis_word_count = len(with_analysis_text.split())
+
+    analysis_stats_section = ""
+    if analysis_stats:
+        analysis_stats_section = f"""
+## Scientific Analysis Statistics
+
+| Element | Count |
+|---------|-------|
+| Arguments | {analysis_stats.get("total_arguments", "N/A")} |
+| Evidence | {analysis_stats.get("total_evidence", "N/A")} |
+| Hypotheses | {analysis_stats.get("total_hypotheses", "N/A")} |
+| Conclusions | {analysis_stats.get("total_conclusions", "N/A")} |
+| Objectives | {analysis_stats.get("total_objectives", "N/A")} |
+| Tasks | {analysis_stats.get("total_tasks", "N/A")} |
+| Pivot Points | {analysis_stats.get("pivot_points_found", len(analysis_stats.get("pivot_points", [])))} |"""  # type: ignore[arg-type]
+
+    baseline_header = baseline_header + """
+
+"""
+
+    with_analysis_header = f"""---
+# WITH ANALYSIS OUTPUT (With Argument Structure)
+
+**Scenario**: {scenario_name}
+**Generated**: {timestamp.isoformat()}
+**Mode**: WITH_ANALYSIS (argument_structure=aggregated data)
+**Word Count**: {with_analysis_word_count:,}
+
+---
+
+> **Note**: This output was generated WITH the scientific analysis argument structure.
+> The LLM received extracted arguments, evidence, objectives, and tasks from source materials.
+
+{analysis_stats_section}---
+
+"""
+    with_analysis_content = with_analysis_header + with_analysis_text
+
+    try:
+        with_analysis_path.write_text(with_analysis_content, encoding="utf-8")
+    except (PermissionError, OSError) as e:
+        logger.error(
+            "Failed to write with-analysis comparison output",
+            scenario_name=scenario_name,
+            output_path=str(with_analysis_path),
+            error=str(e),
+        )
+        raise
+
+    logger.info(
+        "Saved comparison outputs",
+        scenario_name=scenario_name,
+        baseline_path=str(baseline_path),
+        baseline_words=baseline_word_count,
+        with_analysis_path=str(with_analysis_path),
+        with_analysis_words=with_analysis_word_count,
+        word_difference=with_analysis_word_count - baseline_word_count,
+    )
+
+    return baseline_path, with_analysis_path

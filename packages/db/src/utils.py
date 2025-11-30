@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, cast
 from uuid import UUID
 
@@ -126,6 +127,7 @@ async def update_source_indexing_status(
     indexing_status: SourceIndexingStatusEnum,
     trace_id: str,
     document_metadata: DocumentMetadata | None = None,
+    scientific_analysis_json: str | None = None,
     error_type: str | None = None,
     error_message: str | None = None,
 ) -> None:
@@ -134,6 +136,9 @@ async def update_source_indexing_status(
             update_values: dict[str, Any] = {"indexing_status": indexing_status, "text_content": text_content}
             if document_metadata is not None:
                 update_values["document_metadata"] = document_metadata
+            if scientific_analysis_json is not None:
+                update_values["scientific_analysis_json"] = scientific_analysis_json
+                update_values["scientific_analysis_updated_at"] = datetime.now(UTC)
             if error_type is not None:
                 update_values["error_type"] = error_type
             if error_message is not None:

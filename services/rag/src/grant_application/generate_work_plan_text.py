@@ -23,6 +23,8 @@ from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.source_validation import handle_source_validation
 
 if TYPE_CHECKING:
+    from packages.shared_utils.src.scientific_analysis import ScientificAnalysisResult
+
     from services.rag.src.grant_application.dto import StageDTO
     from services.rag.src.utils.job_manager import JobManager
 
@@ -83,22 +85,26 @@ The text will be evaluated by scientific experts and must balance technical prec
 Follow this structured reasoning process before and during writing:
 
 1. **Read**
-   - Carefully read *all* provided materials: the description, relationships, instructions, guiding questions, and prior work plan text.
+   - Carefully read *all* provided materials: the description, relationships, instructions, guiding questions, prior work plan text, and scientific analysis context (if provided).
    - Do not assume missing information until everything has been reviewed.
+   - Pay special attention to the Scientific Analysis Context - it contains extracted arguments, evidence, objectives, and tasks from source materials.
 
 2. **Identify**
    - Identify the main research focus, technical goals, and dependencies.
    - Recognize relevant methods, terms, names of researchers, datasets, and related works already mentioned in the context.
+   - If Scientific Analysis is provided, identify relevant arguments and evidence that support this component.
    - Mark only *truly* missing data-do not fabricate details.
 
 3. **Reason**
    - Reason through how this ${object_type} connects to other components and the overall research plan.
    - Determine the scientific logic, contribution, and sequence of activities based on the information you have.
+   - Use extracted arguments and evidence to build a strong logical chain supporting this component.
    - When data is missing, explicitly mention it using precise reasoning about what's absent and why it matters.
 
 4. **Write**
    - Write with precision and structure.
    - Integrate available examples, references, and terminology naturally.
+   - Ground claims in the extracted evidence and arguments - cite specific findings rather than making generic statements.
    - Keep tone professional, scientific, and aligned with the original context and terminology.
    - Examples, names, and technical details strengthen credibility-use them when relevant.
 
@@ -144,6 +150,7 @@ Use the already written parts of the work plan to maintain continuity and cohere
 ${work_plan_text}
 </work_plan_text>
 
+${argument_structure_section}
 """,
 )
 
@@ -241,6 +248,69 @@ def _format_relationships(component: ResearchComponentGenerationDTO) -> str:
     if not relationships:
         return "None"
     return "\n".join(f"- {component['number']} -> {target}: {description}" for target, description in relationships)
+
+
+def _format_argument_structure(argument_structure: "ScientificAnalysisResult | None") -> str:
+    """Format scientific analysis results as context for work plan generation."""
+    if argument_structure is None:
+        return ""
+
+    sections = []
+
+    # Add relevant objectives from source analysis
+    objectives = argument_structure.get("objectives", [])
+    if objectives:
+        obj_lines = [f"- {obj['text']}" for obj in objectives]
+        if obj_lines:
+            sections.append("### Research Objectives from Source Materials\n" + "\n".join(obj_lines))
+
+    # Add relevant tasks with dependencies
+    tasks = argument_structure.get("tasks", [])
+    if tasks:
+        task_lines = []
+        for task in tasks:
+            deps = task.get("depends_on", [])
+            dep_str = f" (depends on: {', '.join(str(d) for d in deps)})" if deps else ""
+            task_lines.append(f"- Task {task['id']}: {task['text']}{dep_str}")
+        if task_lines:
+            sections.append("### Tasks from Source Materials\n" + "\n".join(task_lines))
+
+    # Add key arguments that support the research
+    arguments = argument_structure.get("arguments", [])
+    if arguments:
+        arg_lines = []
+        for arg in arguments:
+            strength = arg.get("strength", "")
+            arg_lines.append(f"- [{strength}] {arg['text']}")
+        if arg_lines:
+            sections.append("### Key Arguments from Source Materials\n" + "\n".join(arg_lines))
+
+    # Add supporting evidence
+    evidence = argument_structure.get("evidence", [])
+    if evidence:
+        ev_lines = []
+        for ev in evidence:
+            ev_type = ev.get("type", "")
+            ev_lines.append(f"- [{ev_type}] {ev['text']}")
+        if ev_lines:
+            sections.append("### Supporting Evidence from Source Materials\n" + "\n".join(ev_lines))
+
+    if not sections:
+        return ""
+
+    return """## Scientific Analysis Context
+
+**IMPORTANT: You have access to structured scientific analysis data extracted from source materials. USE THIS DATA to:**
+
+1. **Ground your writing in evidence**: Reference the extracted arguments and evidence when making claims
+2. **Align with source objectives**: Ensure your component aligns with the research objectives from the source materials
+3. **Respect task dependencies**: When writing tasks, acknowledge prerequisites and logical sequencing from the extracted task structure
+4. **Cite specific data**: Use concrete numbers, findings, and evidence from the extracted elements rather than making generic statements
+5. **Build on existing arguments**: Strengthen your writing by connecting to the argument chains already established in the source materials
+
+The following elements were extracted from source materials:
+
+""" + "\n\n".join(sections)
 
 
 async def adjust_component_length(
@@ -389,6 +459,7 @@ async def generate_work_plan_component_text(
     form_inputs: ResearchDeepDive | TranslationalResearchDeepDive,
     work_plan_text: str,
     shared_rag_results: list[str] | None = None,
+    argument_structure: "ScientificAnalysisResult | None" = None,
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
 ) -> str:
@@ -403,6 +474,8 @@ async def generate_work_plan_component_text(
 
     min_words, max_words = _component_word_bounds(component)
 
+    argument_structure_section = _format_argument_structure(argument_structure)
+
     prompt = GENERATE_WORK_COMPONENT_USER_PROMPT.to_string(
         description=component.get("description", "none given"),
         guiding_questions=component["guiding_questions"],
@@ -416,6 +489,7 @@ async def generate_work_plan_component_text(
         object_type_specific_guidance=object_type_specific_guidance,
         relationship_guidance=relationship_guidance,
         object_title=component["title"],
+        argument_structure_section=argument_structure_section,
     )
 
     rag_results = []
@@ -524,6 +598,7 @@ async def generate_workplan_section(
     components: list[ResearchComponentGenerationDTO],
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
+    argument_structure: "ScientificAnalysisResult | None" = None,
     batch_size: int = DEFAULT_BATCH_SIZE,
     retrieve_shared_context: bool = True,
 ) -> str:
@@ -567,6 +642,7 @@ async def generate_workplan_section(
             work_plan_text="",
             form_inputs=form_inputs,
             shared_rag_results=shared_rag_results if retrieve_shared_context else None,
+            argument_structure=argument_structure,
             trace_id=trace_id,
             job_manager=job_manager,
         )

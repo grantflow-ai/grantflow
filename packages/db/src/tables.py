@@ -259,6 +259,12 @@ class RagSource(BaseWithUUIDPK):
 
     source_type: Mapped[Literal["rag_file", "rag_url"]] = mapped_column(String(50))
 
+    # Scientific analysis extracted from document content (stored as JSON)
+    scientific_analysis_json: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
+    scientific_analysis_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )
+
 
 class RagFile(RagSource):
     __tablename__ = "rag_files"

@@ -1,0 +1,33 @@
+"""add_scientific_analysis_to_rag_source
+
+Revision ID: 81d79f23e2ab
+Revises: 212e35358ac5
+Create Date: 2025-11-30 12:20:00.000000
+
+"""
+
+from collections.abc import Sequence
+
+import sqlalchemy as sa
+from alembic import op
+
+# revision identifiers, used by Alembic.
+revision: str = "81d79f23e2ab"
+down_revision: str | None = "212e35358ac5"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
+
+
+def upgrade() -> None:
+    """Add scientific_analysis_json and scientific_analysis_updated_at to rag_sources."""
+    op.add_column("rag_sources", sa.Column("scientific_analysis_json", sa.Text(), nullable=True))
+    op.add_column(
+        "rag_sources",
+        sa.Column("scientific_analysis_updated_at", sa.DateTime(timezone=True), nullable=True),
+    )
+
+
+def downgrade() -> None:
+    """Remove scientific_analysis columns from rag_sources."""
+    op.drop_column("rag_sources", "scientific_analysis_updated_at")
+    op.drop_column("rag_sources", "scientific_analysis_json")

@@ -22,6 +22,7 @@ from packages.shared_utils.src.gcs import (
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.pubsub import PubSubEvent
+from packages.shared_utils.src.serialization import serialize
 from packages.shared_utils.src.server import create_litestar_app
 from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -120,7 +121,7 @@ async def handle_pubsub_message(
 
 
 @post("/")
-async def handle_file_indexing(
+async def handle_file_indexing(  # noqa: PLR0912
     data: PubSubEvent,
     session_maker: async_sessionmaker[Any],
 ) -> None:
@@ -301,7 +302,7 @@ async def handle_file_indexing(
 
     try:
         processing_start = time.time()
-        vectors, text_content, document_metadata = await process_source(
+        vectors, text_content, document_metadata, scientific_analysis = await process_source(
             content=content,
             source_id=str(parse_result["source_id"]),
             filename=parse_result["blob_name"],
@@ -313,6 +314,7 @@ async def handle_file_indexing(
             processing_duration_ms=round((time.time() - processing_start) * 1000, 2),
             text_length=len(text_content),
             vector_count=len(vectors) if vectors else 0,
+            scientific_analysis_available=scientific_analysis is not None,
             trace_id=trace_id,
         )
 
@@ -328,6 +330,7 @@ async def handle_file_indexing(
                 indexing_status=SourceIndexingStatusEnum.FINISHED,
                 trace_id=trace_id,
                 document_metadata=document_metadata,
+                scientific_analysis_json=serialize(scientific_analysis).decode() if scientific_analysis else None,
             )
         else:
             async with session_maker() as session, session.begin():
@@ -337,6 +340,10 @@ async def handle_file_indexing(
                 }
                 if document_metadata is not None:
                     update_values["document_metadata"] = dict(document_metadata)
+
+                if scientific_analysis is not None:
+                    update_values["scientific_analysis_json"] = serialize(scientific_analysis).decode()
+                    update_values["scientific_analysis_updated_at"] = datetime.now(UTC)
 
                 await session.execute(
                     update(RagSource).where(RagSource.id == parse_result["source_id"]).values(update_values)

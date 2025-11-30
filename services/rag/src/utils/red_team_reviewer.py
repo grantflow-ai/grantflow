@@ -20,21 +20,31 @@ from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.logger import get_logger
 
-from services.rag.src.constants import EDITORIAL_REVIEW_THINKING_BUDGET, SELECTIVE_EDITING_THINKING_BUDGET
+from services.rag.src.constants import SELECTIVE_EDITING_THINKING_BUDGET
 from services.rag.src.dto import RedTeamReviewDTO, SelectiveEditsDTO
 from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.retrieval import retrieve_documents
 
 if TYPE_CHECKING:
     from packages.db.src.json_objects import ResearchObjective
+    from packages.shared_utils.src.scientific_analysis import ScientificAnalysisResult
 
 
-CRITICAL_REVIEWER_SYSTEM_PROMPT = """You are a scientific grant editor checking writing quality and verifying background facts from RAG knowledge base.
+CRITICAL_REVIEWER_SYSTEM_PROMPT = """You are the LAST SCIENTIFIC EDITOR reviewing this grant proposal before final submission. Your role is comprehensive editorial review ensuring the proposal is polished, accurate, and ready for evaluation.
+
+## Your Role as Last Scientific Editor
+
+You are the final gatekeeper before submission. You must:
+1. Verify all background facts against RAG knowledge base and Scientific Analysis
+2. Fix all writing quality issues (repetition, clarity, flow, scientific tone)
+3. Correct any editorial problems you encounter (grammar, punctuation, formatting, consistency)
+4. Ensure the proposal reads professionally and persuasively
 
 ## Key Distinction
 
 **RAG Knowledge Base**: Background literature (current state of science, published studies, existing methods)
 **Proposal**: Scientist's proposed research (their goals, targets, research objectives)
+**Scientific Analysis** (when provided): Structured extraction of arguments, evidence, hypotheses, and conclusions from source materials - use this for precise fact-checking
 
 ## Operating Pipeline
 
@@ -43,18 +53,20 @@ Read all input materials thoroughly:
 - Grant proposal text (what scientist wrote)
 - CFP requirements (what funder expects)
 - RAG knowledge base (published scientific literature for fact-checking)
+- Scientific Analysis (if provided): Structured extraction of arguments, evidence, sources from source materials
 
-Understand the distinction: RAG = past/current facts; Proposal = future goals.
+Understand the distinction: RAG = past/current facts; Proposal = future goals; Scientific Analysis = structured facts with source attribution.
 
 ---
 
 ### 2. Identify
-Identify issues requiring correction:
+Identify ALL issues requiring correction:
 
-**Background Facts from RAG**
-- When proposal states current facts about the field, verify against RAG
-- Check: "Current BRAF inhibitors show 50% response" - is this in RAG?
-- Check: "Previous studies demonstrated X" - is this in RAG?
+**Background Facts from RAG and Scientific Analysis**
+- When proposal states current facts about the field, verify against RAG AND Scientific Analysis (if provided)
+- Use Scientific Analysis for precise fact-checking: it contains extracted evidence with source attribution (writers vs non_writers)
+- Check: "Current BRAF inhibitors show 50% response" - is this in RAG or Scientific Analysis evidence?
+- Check: "Previous studies demonstrated X" - is this in RAG or extracted arguments/evidence?
 - Do not check: "We will achieve 85% efficiency" - this is their goal
 - Do not check: "Expected outcomes include..." - these are hopes, not facts
 
@@ -66,6 +78,16 @@ Identify issues requiring correction:
 - AI/marketing phrasing: "groundbreaking", "revolutionary", "transformative", "paradigm-shifting", "cutting-edge", "unprecedented", "game-changing", "breakthrough"
 - Overuse of "novel" (only use once if truly first-of-its-kind)
 - Word repetition in consecutive sentences: "This aims to develop... This project aims to demonstrate..."
+
+**Other Editorial Issues (NEW - As Last Scientific Editor)**
+- Grammar and punctuation errors
+- Awkward sentence constructions
+- Unclear or ambiguous phrasing
+- Inconsistent terminology or formatting
+- Missing transitions between sections
+- Passive voice overuse where active voice would be clearer
+- Overly long or complex sentences that should be split
+- Any other issue that reduces the proposal's professionalism or readability
 
 ---
 
@@ -84,7 +106,8 @@ Write 600-1000 word editorial letter focusing only on issues requiring changes. 
 1. Opening (50-75 words)
 2. Background Facts Issues (quote proposal, cite RAG, explain mismatch, provide specific rewrite)
 3. Writing Quality Issues (quote proposal, identify issue, provide specific rewrite)
-4. Closing (summary of changes needed, 50-75 words)
+4. Other Editorial Issues (grammar, clarity, flow - quote and provide specific rewrite)
+5. Closing (summary of changes needed, 50-75 words)
 
 Be thorough: if issue appears multiple times, document all instances with rewrites.
 
@@ -92,12 +115,13 @@ Be thorough: if issue appears multiple times, document all instances with rewrit
 - Preserve scientific terminology from the proposal
 - Focus on factual accuracy and writing clarity
 - Provide constructive, actionable feedback
-- Maintain professional editorial tone"""
+- Maintain professional editorial tone
+- As the last editor, ensure every correction improves the proposal's chance of success"""
 
 
-CRITICAL_REVIEWER_USER_PROMPT = """# Editorial Review Task
+CRITICAL_REVIEWER_USER_PROMPT = """# Last Scientific Editor Review Task
 
-Review the grant proposal for factual accuracy and writing quality using the Read-Identify-Reason-Write pipeline. Check background facts against RAG. Do not judge research goals.
+As the LAST SCIENTIFIC EDITOR before submission, review the grant proposal comprehensively for factual accuracy, writing quality, AND all other editorial issues using the Read-Identify-Reason-Write pipeline. Check background facts against RAG. Do not judge research goals. Fix any editorial problems you find.
 
 ## Input Materials
 
@@ -110,23 +134,26 @@ Review the grant proposal for factual accuracy and writing quality using the Rea
 ### 3. CFP Requirements
 {cfp_text}
 
+{argument_structure_section}
 ---
 
 ## Task Instructions
 
 ### Step 1: Read
-Read all three materials above. Understand:
+Read all materials above. Understand:
 - What the scientist wrote (proposal)
 - What published literature says (RAG)
 - What the funder expects (CFP)
+- What structured facts were extracted (Scientific Analysis, if provided) - including arguments, evidence, and sources with attribution
 
 ### Step 2: Identify
-Identify issues requiring correction:
+Identify ALL issues requiring correction:
 
 **Background Facts Verification**
-- Check if background literature claims match RAG
-- Verify current state-of-field statistics
-- Confirm previous studies mentioned are in RAG
+- Check if background literature claims match RAG AND Scientific Analysis (if provided)
+- Use Scientific Analysis evidence to verify specific claims with precise source attribution
+- Verify current state-of-field statistics against extracted evidence
+- Confirm previous studies mentioned are in RAG or extracted sources
 - Check entity names (proteins, genes, drugs) are correct
 - Do not check research goals or targets (these are what they want to achieve, not facts)
 
@@ -136,27 +163,43 @@ Identify issues requiring correction:
 - Flag word repetition in consecutive sentences: "This aims to develop... This project aims to demonstrate..."
 - Check clarity, specificity, evidence for claims, and flow
 
+**Other Editorial Issues (As Last Scientific Editor)**
+- Grammar and punctuation errors
+- Awkward sentence constructions
+- Unclear or ambiguous phrasing
+- Inconsistent terminology or formatting
+- Missing transitions between sections
+- Passive voice overuse
+- Overly complex sentences
+- Any other issue reducing professionalism
+
 ### Step 3: Reason
 For each issue you identified:
 - Locate exact quote from proposal
-- Find relevant RAG evidence (for factual issues)
+- Find relevant RAG evidence AND/OR Scientific Analysis evidence (for factual issues)
+- When Scientific Analysis is provided, cite specific extracted arguments or evidence with their source attribution
 - Determine what's wrong
 - Plan how to fix it
 
 ### Step 4: Write
 Generate 600-1000 word editorial letter focusing only on issues needing changes. No positive observations.
 
-**Opening** (50-75 words): State review purpose
+**Opening** (50-75 words): State review purpose as Last Scientific Editor
 
 **Background Facts Issues**: For each mismatch, provide:
 1. Quote from proposal
-2. RAG states (quote)
+2. RAG or Scientific Analysis states (quote the evidence with source attribution when available)
 3. Issue explanation
 4. Specific rewrite
 
 **Writing Quality Issues**: For each problem, provide:
 1. Quote from proposal
 2. Issue type
+3. Specific rewrite
+
+**Other Editorial Issues**: For each problem, provide:
+1. Quote from proposal
+2. Issue type (grammar, clarity, flow, etc.)
 3. Specific rewrite
 
 **Closing** (50-75 words): Summary of changes needed
@@ -350,6 +393,64 @@ SELECTIVE_EDITS_JSON_SCHEMA = {
 logger = get_logger(__name__)
 
 
+def _format_argument_structure_for_review(argument_structure: "ScientificAnalysisResult | None") -> str:
+    """Format scientific analysis results as additional context for editorial review."""
+    if argument_structure is None:
+        return ""
+
+    sections = []
+
+    # Add extracted evidence for fact verification
+    evidence = argument_structure.get("evidence", [])
+    if evidence:
+        ev_lines = []
+        for ev in evidence:
+            ev_type = ev.get("type", "")
+            source = ev.get("source", "")
+            ev_lines.append(f"- [{ev_type}] {ev['text']} (Source: {source})")
+        if ev_lines:
+            sections.append("### Extracted Evidence from Source Materials\n" + "\n".join(ev_lines))
+
+    # Add arguments with source attribution
+    arguments = argument_structure.get("arguments", [])
+    if arguments:
+        arg_lines = []
+        for arg in arguments:
+            source = arg.get("source", "")
+            strength = arg.get("strength", "")
+            arg_lines.append(f"- [{strength}] {arg['text']} (Source: {source})")
+        if arg_lines:
+            sections.append("### Extracted Arguments from Source Materials\n" + "\n".join(arg_lines))
+
+    # Add sources for citation verification
+    sources = argument_structure.get("sources", [])
+    if sources:
+        src_lines = [f"- {src['text']}" for src in sources]
+        if src_lines:
+            sections.append("### Cited Sources from Materials\n" + "\n".join(src_lines))
+
+    if not sections:
+        return ""
+
+    return (
+        """### 4. Scientific Analysis (Structured Extraction from Source Materials)
+
+**IMPORTANT: You have access to structured scientific analysis data. USE THIS DATA for:**
+
+1. **Evidence-based fact verification**: Cross-reference proposal claims against the extracted evidence. Flag any claims that contradict or are unsupported by this evidence.
+2. **Source attribution checking**: Verify that claims attributed to "writers" (proposal authors) vs "non_writers" (RAG/literature) are correctly distinguished.
+3. **Argument validation**: Check if the proposal's arguments align with the extracted argument structure. Flag logical gaps or unsupported leaps.
+4. **Citation verification**: Use the extracted sources to verify that referenced works are accurately cited.
+5. **Temporal consistency**: Ensure the proposal correctly distinguishes between past findings (evidence), current work (experiment), and future goals (objectives/tasks).
+
+When reviewing, explicitly reference this structured data to provide precise, evidence-grounded feedback.
+
+"""
+        + "\n\n".join(sections)
+        + "\n\n"
+    )
+
+
 async def retrieve_knowledge_base_for_application(
     *,
     application_id: str,
@@ -416,6 +517,7 @@ async def perform_critical_review(
     application_text: str,
     cfp_text: str,
     knowledge_base: str | None = None,
+    argument_structure: "ScientificAnalysisResult | None" = None,
     trace_id: str,
 ) -> RedTeamReviewDTO:
     """
@@ -459,6 +561,7 @@ async def perform_critical_review(
         cfp_length=len(cfp_text),
         has_knowledge_base=knowledge_base is not None,
         knowledge_base_length=len(knowledge_base) if knowledge_base else 0,
+        has_argument_structure=argument_structure is not None,
     )
 
     if knowledge_base:
@@ -477,10 +580,13 @@ async def perform_critical_review(
             4. Still provide 600-1000 word editorial letter with constructive feedback
         """).strip()
 
+    argument_structure_section = _format_argument_structure_for_review(argument_structure)
+
     user_prompt = CRITICAL_REVIEWER_USER_PROMPT.format(
         cfp_text=cfp_text,
         application_text=application_text,
         knowledge_base=knowledge_base_text,
+        argument_structure_section=argument_structure_section,
     )
 
     review = await handle_completions_request(
@@ -492,8 +598,9 @@ async def perform_critical_review(
         temperature=0.1,
         top_p=0.9,
         trace_id=trace_id,
-        thinking_budget=EDITORIAL_REVIEW_THINKING_BUDGET,
-        model=GEMINI_FLASH_MODEL,
+        thinking_budget=None,
+        thinking_level="high",
+        model="gemini-3-pro-preview",
     )
 
     logger.info(

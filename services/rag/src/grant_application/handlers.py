@@ -4,6 +4,8 @@ from packages.db.src.json_objects import ResearchDeepDive, TranslationalResearch
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import BackendError, ValidationError
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.scientific_analysis import ScientificAnalysisResult, aggregate_analyses
+from packages.shared_utils.src.serialization import deserialize
 from packages.shared_utils.src.sync import batched_gather
 from packages.shared_utils.src.text import normalize_markdown
 
@@ -36,6 +38,74 @@ logger = get_logger(__name__)
 
 SECTION_GENERATION_BATCH_SIZE: Final[int] = 4
 WIKIDATA_ENRICHMENT_BATCH_SIZE: Final[int] = 4
+
+
+def get_aggregated_scientific_analysis(
+    grant_application: "GrantApplication",
+) -> ScientificAnalysisResult | None:
+    """Get aggregated scientific analysis from all rag sources of a grant application.
+
+    This reads pre-computed scientific analysis from RagSource.scientific_analysis_json
+    for all source documents associated with the grant application and aggregates them.
+
+    Args:
+        grant_application: The grant application with rag_sources relationship loaded
+
+    Returns:
+        Aggregated ScientificAnalysisResult or None if no analyses available
+    """
+    analyses: list[ScientificAnalysisResult] = []
+
+    if not grant_application.rag_sources:
+        logger.debug(
+            "No rag sources found for grant application",
+            application_id=str(grant_application.id),
+        )
+        return None
+
+    for grant_source in grant_application.rag_sources:
+        rag_source = grant_source.rag_source
+        if rag_source is None:
+            continue
+
+        if rag_source.deleted_at is not None:
+            continue
+
+        if rag_source.scientific_analysis_json is None:
+            continue
+
+        try:
+            analysis = deserialize(rag_source.scientific_analysis_json, ScientificAnalysisResult)
+            analyses.append(analysis)
+        except Exception:
+            logger.exception(
+                "Failed to deserialize scientific analysis",
+                source_id=str(rag_source.id),
+                application_id=str(grant_application.id),
+            )
+            continue
+
+    if not analyses:
+        logger.debug(
+            "No scientific analyses found for grant application",
+            application_id=str(grant_application.id),
+            source_count=len(grant_application.rag_sources),
+        )
+        return None
+
+    aggregated = aggregate_analyses(analyses)
+
+    logger.info(
+        "Aggregated scientific analysis from rag sources",
+        application_id=str(grant_application.id),
+        source_count=len(analyses),
+        total_arguments=aggregated["metadata"]["total_arguments"],
+        total_evidence=aggregated["metadata"]["total_evidence"],
+        total_objectives=aggregated["metadata"]["total_objectives"],
+        total_tasks=aggregated["metadata"]["total_tasks"],
+    )
+
+    return aggregated
 
 
 async def handle_generate_sections_stage(
@@ -92,6 +162,9 @@ async def handle_generate_sections_stage(
     )
     shared_context = "\n".join(retrieval_results)
 
+    # Get pre-computed scientific analysis from indexed documents (zero latency - computed during indexing)
+    scientific_analysis = get_aggregated_scientific_analysis(grant_application)
+
     generation_coroutines = [
         handle_generate_section_text(
             section=section,
@@ -101,6 +174,7 @@ async def handle_generate_sections_stage(
             research_plan_text=research_plan_text,
             trace_id=trace_id,
             job_manager=job_manager,
+            argument_structure=scientific_analysis,
         )
         for section in long_form_sections
     ]
@@ -385,10 +459,14 @@ async def handle_generate_research_plan_stage(
     else:
         form_inputs_for_workplan = grant_application.form_inputs
 
+    # Get pre-computed scientific analysis from indexed documents (zero latency - computed during indexing)
+    scientific_analysis = get_aggregated_scientific_analysis(grant_application)
+
     work_plan_text = await generate_workplan_section(
         application_id=str(grant_application.id),
         form_inputs=form_inputs_for_workplan,
         components=dtos,
+        argument_structure=scientific_analysis,
         trace_id=trace_id,
         job_manager=job_manager,
     )
