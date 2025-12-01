@@ -118,6 +118,7 @@ export namespace API {
 };
 
 	export type RequestBody = {
+	is_primary_source: boolean | null;
 	url: string;
 };
 };
@@ -145,6 +146,7 @@ export namespace API {
 };
 
 	export type RequestBody = {
+	is_primary_source: boolean | null;
 	url: string;
 };
 };
@@ -169,6 +171,7 @@ export namespace API {
 };
 
 	export type RequestBody = {
+	is_primary_source: boolean | null;
 	url: string;
 };
 };
@@ -384,6 +387,10 @@ export namespace API {
 	export interface QueryParameters {
 	blob_name: string;
 };
+
+	export type RequestBody = null | {
+	is_primary_source: boolean | null;
+};
 };
 
 	export namespace CreateGrantTemplate {
@@ -432,6 +439,10 @@ export namespace API {
 
 	export interface QueryParameters {
 	blob_name: string;
+};
+
+	export type RequestBody = null | {
+	is_primary_source: boolean | null;
 };
 };
 
@@ -581,6 +592,10 @@ export namespace API {
 
 	export interface QueryParameters {
 	blob_name: string;
+};
+
+	export type RequestBody = null | {
+	is_primary_source: boolean | null;
 };
 };
 

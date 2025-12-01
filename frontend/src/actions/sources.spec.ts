@@ -206,6 +206,7 @@ describe("Sources Actions", () => {
 					`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/sources/upload-url?blob_name=${mockFileName}`,
 					{
 						headers: mockAuthHeaders,
+						json: { is_primary_source: true },
 					},
 				);
 
@@ -408,6 +409,7 @@ describe("Sources Actions", () => {
 					`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/grant_templates/${mockTemplateId}/sources/upload-url?blob_name=${mockFileName}`,
 					{
 						headers: mockAuthHeaders,
+						json: { is_primary_source: true },
 					},
 				);
 
@@ -489,7 +491,7 @@ describe("Sources Actions", () => {
 					`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/grant_templates/${mockTemplateId}/sources/crawl-url`,
 					{
 						headers: mockAuthHeaders,
-						json: { url: urlRequest.url },
+						json: { is_primary_source: true, url: urlRequest.url },
 					},
 				);
 
@@ -570,7 +572,7 @@ describe("Sources Actions", () => {
 					`organizations/${mockOrganizationId}/projects/${mockProjectId}/applications/${mockApplicationId}/sources/crawl-url`,
 					{
 						headers: mockAuthHeaders,
-						json: { url: urlRequest.url },
+						json: { is_primary_source: true, url: urlRequest.url },
 					},
 				);
 

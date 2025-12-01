@@ -41,6 +41,7 @@ export async function createGrantingInstitutionUploadUrl(id: string, blobName: s
 		getClient()
 			.post(`granting-institutions/${id}/sources/upload-url?blob_name=${encodeURIComponent(blobName)}`, {
 				headers: await createAuthHeaders(),
+				json: { is_primary_source: true } satisfies API.CreateGrantingInstitutionRagSourceUploadUrl.RequestBody,
 			})
 			.json<API.CreateGrantingInstitutionRagSourceUploadUrl.Http201.ResponseBody>(),
 	);

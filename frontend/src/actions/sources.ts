@@ -16,7 +16,7 @@ export async function crawlApplicationUrl(
 				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/sources/crawl-url`,
 				{
 					headers: await createAuthHeaders(),
-					json: { url } satisfies API.CrawlGrantApplicationUrl.RequestBody,
+					json: { is_primary_source: true, url } satisfies API.CrawlGrantApplicationUrl.RequestBody,
 				},
 			)
 			.json<API.CrawlGrantApplicationUrl.Http201.ResponseBody>(),
@@ -36,7 +36,7 @@ export async function crawlTemplateUrl(
 				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/grant_templates/${templateId}/sources/crawl-url`,
 				{
 					headers: await createAuthHeaders(),
-					json: { url } satisfies API.CrawlGrantTemplateUrl.RequestBody,
+					json: { is_primary_source: true, url } satisfies API.CrawlGrantTemplateUrl.RequestBody,
 				},
 			)
 			.json<API.CrawlGrantTemplateUrl.Http201.ResponseBody>(),
@@ -55,6 +55,9 @@ export async function createApplicationSourceUploadUrl(
 				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/sources/upload-url?blob_name=${fileName}`,
 				{
 					headers: await createAuthHeaders(),
+					json: {
+						is_primary_source: true,
+					} satisfies API.CreateGrantApplicationRagSourceUploadUrl.RequestBody,
 				},
 			)
 			.json<API.CreateGrantApplicationRagSourceUploadUrl.Http201.ResponseBody>(),
@@ -74,6 +77,7 @@ export async function createTemplateSourceUploadUrl(
 				`organizations/${organizationId}/projects/${projectId}/applications/${applicationId}/grant_templates/${templateId}/sources/upload-url?blob_name=${fileName}`,
 				{
 					headers: await createAuthHeaders(),
+					json: { is_primary_source: true } satisfies API.CreateGrantTemplateRagSourceUploadUrl.RequestBody,
 				},
 			)
 			.json<API.CreateGrantTemplateRagSourceUploadUrl.Http201.ResponseBody>(),

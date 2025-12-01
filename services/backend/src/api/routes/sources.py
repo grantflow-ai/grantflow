@@ -1,6 +1,6 @@
 import asyncio
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
 from uuid import UUID
 
 from litestar import delete, get, post
@@ -82,6 +82,11 @@ class DownloadUrlResponse(TypedDict):
 
 class UrlCrawlingRequest(TypedDict):
     url: str
+    is_primary_source: NotRequired[bool]
+
+
+class CreateUploadUrlRequest(TypedDict):
+    is_primary_source: NotRequired[bool]
 
 
 class UrlCrawlingResponse(TypedDict):
@@ -150,6 +155,7 @@ async def handle_create_rag_source(
     organization_id: UUID | None = None,
     granting_institution_id: UUID | None = None,
     template_id: UUID | None = None,
+    is_primary_source: bool = True,
 ) -> UUID:
     parent_type, parent_id, entity_type, entity_id = await _determine_entity_info(
         session_maker=session_maker,
@@ -203,6 +209,7 @@ async def handle_create_rag_source(
                             "indexing_status": SourceIndexingStatusEnum.PENDING_UPLOAD,
                             "text_content": "",
                             "source_type": RAG_URL if url else RAG_FILE,  # Set polymorphic identity ~keep
+                            "is_primary_source": is_primary_source,
                         }
                     ]
                 )
@@ -610,6 +617,7 @@ async def handle_create_upload_url(
     session_maker: async_sessionmaker[Any],
     blob_name: str,
     request: APIRequest,
+    data: CreateUploadUrlRequest | None = None,
     organization_id: UUID | None = None,
     granting_institution_id: UUID | None = None,
     application_id: UUID | None = None,
@@ -630,6 +638,10 @@ async def handle_create_upload_url(
     if not project_id and not organization_id and not granting_institution_id:
         raise ValidationError("Either project_id, organization_id, or granting_institution_id must be provided")
 
+    is_primary_source = True
+    if data and data.get("is_primary_source") is not None:
+        is_primary_source = bool(data["is_primary_source"])
+
     source_id = await handle_create_rag_source(
         application_id=application_id,
         blob_name=blob_name,
@@ -638,6 +650,7 @@ async def handle_create_upload_url(
         granting_institution_id=granting_institution_id,
         session_maker=session_maker,
         template_id=template_id,
+        is_primary_source=is_primary_source,
     )
 
     await asyncio.sleep(0.2)
@@ -717,6 +730,10 @@ async def handle_crawl_url(
     if not project_id and not organization_id and not granting_institution_id:
         raise ValidationError("Either project_id, organization_id, or granting_institution_id must be provided")
 
+    is_primary_source = True
+    if data.get("is_primary_source") is not None:
+        is_primary_source = bool(data["is_primary_source"])
+
     source_id = await handle_create_rag_source(
         session_maker=session_maker,
         url=url,
@@ -724,6 +741,7 @@ async def handle_crawl_url(
         organization_id=organization_id,
         granting_institution_id=granting_institution_id,
         template_id=template_id,
+        is_primary_source=is_primary_source,
     )
 
     await asyncio.sleep(0.2)
