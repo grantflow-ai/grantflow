@@ -458,6 +458,7 @@ export const LoginRequestFactory = new Factory<API.Login.RequestBody>((factory) 
 }));
 
 export const UrlRequestFactory = new Factory<API.CrawlGrantApplicationUrl.RequestBody>((factory) => ({
+	is_primary_source: true,
 	url: factory.internet.url(),
 }));
 
