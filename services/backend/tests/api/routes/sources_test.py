@@ -721,7 +721,35 @@ async def test_handle_crawl_url_grant_application(
     grant_application: GrantApplication,
     project_member_user: OrganizationUser,
 ) -> None:
-    request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
+    request_data: UrlCrawlingRequest = {"url": "https://example.org/docs", "is_primary_source": True}
+
+    response = await test_client.post(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources/crawl-url",
+        json=request_data,
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    result = response.json()
+    assert "source_id" in result
+
+    mock_publish_url_crawling_task.assert_called_once_with(
+        url="https://example.org/docs",
+        source_id=ANY,
+        entity_type="grant_application",
+        entity_id=grant_application.id,
+        trace_id=ANY,
+    )
+
+
+async def test_handle_crawl_url_grant_application_secondary(
+    test_client: TestingClientType,
+    mock_publish_url_crawling_task: AsyncMock,
+    project: Project,
+    grant_application: GrantApplication,
+    project_member_user: OrganizationUser,
+) -> None:
+    request_data: UrlCrawlingRequest = {"url": "https://example.org/docs", "is_primary_source": False}
 
     response = await test_client.post(
         f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/sources/crawl-url",
@@ -748,7 +776,34 @@ async def test_handle_crawl_url_granting_institution(
     granting_institution: GrantingInstitution,
     mock_admin_code: Mock,
 ) -> None:
-    request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
+    request_data: UrlCrawlingRequest = {"url": "https://example.org/docs", "is_primary_source": True}
+
+    response = await test_client.post(
+        f"/granting-institutions/{granting_institution.id}/sources/crawl-url",
+        json=request_data,
+        headers={"Authorization": "test-admin-code"},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    result = response.json()
+    assert "source_id" in result
+
+    mock_publish_url_crawling_task.assert_called_once_with(
+        url="https://example.org/docs",
+        source_id=ANY,
+        entity_type="granting_institution",
+        entity_id=granting_institution.id,
+        trace_id=ANY,
+    )
+
+
+async def test_handle_crawl_url_granting_institution_secondary(
+    test_client: TestingClientType,
+    mock_publish_url_crawling_task: AsyncMock,
+    granting_institution: GrantingInstitution,
+    mock_admin_code: Mock,
+) -> None:
+    request_data: UrlCrawlingRequest = {"url": "https://example.org/docs", "is_primary_source": False}
 
     response = await test_client.post(
         f"/granting-institutions/{granting_institution.id}/sources/crawl-url",
@@ -777,7 +832,36 @@ async def test_handle_crawl_url_grant_template(
     grant_template: GrantTemplate,
     project_member_user: OrganizationUser,
 ) -> None:
-    request_data: UrlCrawlingRequest = {"url": "https://example.org/docs"}
+    request_data: UrlCrawlingRequest = {"url": "https://example.org/docs", "is_primary_source": True}
+
+    response = await test_client.post(
+        f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant_templates/{grant_template.id}/sources/crawl-url",
+        json=request_data,
+        headers={"Authorization": "Bearer some_token"},
+    )
+
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    result = response.json()
+    assert "source_id" in result
+
+    mock_publish_url_crawling_task.assert_called_once_with(
+        url="https://example.org/docs",
+        source_id=ANY,
+        entity_type="grant_template",
+        entity_id=grant_template.id,
+        trace_id=ANY,
+    )
+
+
+async def test_handle_crawl_url_grant_template_secondary(
+    test_client: TestingClientType,
+    mock_publish_url_crawling_task: AsyncMock,
+    project: Project,
+    grant_application: GrantApplication,
+    grant_template: GrantTemplate,
+    project_member_user: OrganizationUser,
+) -> None:
+    request_data: UrlCrawlingRequest = {"url": "https://example.org/docs", "is_primary_source": False}
 
     response = await test_client.post(
         f"/organizations/{project.organization_id}/projects/{project.id}/applications/{grant_application.id}/grant_templates/{grant_template.id}/sources/crawl-url",
