@@ -20,7 +20,7 @@ from services.rag.src.utils.source_validation import handle_source_validation
 from services.rag.src.utils.text_compression import compress_text
 
 if TYPE_CHECKING:
-    from packages.shared_utils.src.scientific_analysis import ScientificAnalysisResult
+    from packages.db.src.json_objects import ScientificAnalysisResult
 
     from services.rag.src.grant_application.dto import StageDTO
     from services.rag.src.utils.job_manager import JobManager

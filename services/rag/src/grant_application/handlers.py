@@ -1,11 +1,10 @@
 from typing import TYPE_CHECKING, Final, cast
 
-from packages.db.src.json_objects import ResearchDeepDive, TranslationalResearchDeepDive
+from packages.db.src.json_objects import ResearchDeepDive, ScientificAnalysisResult, TranslationalResearchDeepDive
 from packages.shared_utils.src.constants import NotificationEvents
 from packages.shared_utils.src.exceptions import BackendError, ValidationError
 from packages.shared_utils.src.logger import get_logger
-from packages.shared_utils.src.scientific_analysis import ScientificAnalysisResult, aggregate_analyses
-from packages.shared_utils.src.serialization import deserialize
+from packages.shared_utils.src.scientific_analysis import aggregate_analyses
 from packages.shared_utils.src.sync import batched_gather
 from packages.shared_utils.src.text import normalize_markdown
 
@@ -67,23 +66,12 @@ def get_aggregated_scientific_analysis(
         rag_source = grant_source.rag_source
         if rag_source is None:
             continue
-
         if rag_source.deleted_at is not None:
             continue
-
-        if rag_source.scientific_analysis_json is None:
+        analysis = rag_source.scientific_analysis_json
+        if analysis is None:
             continue
-
-        try:
-            analysis = deserialize(rag_source.scientific_analysis_json, ScientificAnalysisResult)
-            analyses.append(analysis)
-        except Exception:
-            logger.exception(
-                "Failed to deserialize scientific analysis",
-                source_id=str(rag_source.id),
-                application_id=str(grant_application.id),
-            )
-            continue
+        analyses.append(analysis)
 
     if not analyses:
         logger.debug(
@@ -161,8 +149,6 @@ async def handle_generate_sections_stage(
         trace_id=trace_id,
     )
     shared_context = "\n".join(retrieval_results)
-
-    # Get pre-computed scientific analysis from indexed documents (zero latency - computed during indexing)
     scientific_analysis = get_aggregated_scientific_analysis(grant_application)
 
     generation_coroutines = [
@@ -459,7 +445,6 @@ async def handle_generate_research_plan_stage(
     else:
         form_inputs_for_workplan = grant_application.form_inputs
 
-    # Get pre-computed scientific analysis from indexed documents (zero latency - computed during indexing)
     scientific_analysis = get_aggregated_scientific_analysis(grant_application)
 
     work_plan_text = await generate_workplan_section(

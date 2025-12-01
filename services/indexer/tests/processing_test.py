@@ -4,9 +4,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from packages.db.src.json_objects import Chunk
 from packages.shared_utils.src.dto import VectorDTO
+from packages.shared_utils.src.processing import process_source
 from pytest_mock import MockerFixture
-
-from services.indexer.src.processing import process_source
 
 
 @pytest.fixture
@@ -45,17 +44,17 @@ async def test_process_source_text_file(
     mock_extraction_result: MagicMock,
 ) -> None:
     mock_extract = mocker.patch(
-        "services.indexer.src.processing.extract_bytes",
+        "packages.shared_utils.src.processing.extract_bytes",
         new_callable=AsyncMock,
         return_value=mock_extraction_result,
     )
     mock_index_chunks = mocker.patch(
-        "services.indexer.src.processing.index_chunks",
+        "packages.shared_utils.src.processing.index_chunks",
         new_callable=AsyncMock,
         return_value=[mock_vector_dto],
     )
     mocker.patch(
-        "services.indexer.src.processing.analyze_scientific_content",
+        "packages.shared_utils.src.processing.analyze_scientific_content",
         new_callable=AsyncMock,
         return_value=None,
     )
@@ -103,17 +102,17 @@ async def test_process_source_pdf_file(
     result.keywords = []
 
     mock_extract = mocker.patch(
-        "services.indexer.src.processing.extract_bytes",
+        "packages.shared_utils.src.processing.extract_bytes",
         new_callable=AsyncMock,
         return_value=result,
     )
     mock_index_chunks = mocker.patch(
-        "services.indexer.src.processing.index_chunks",
+        "packages.shared_utils.src.processing.index_chunks",
         new_callable=AsyncMock,
         return_value=[mock_vector_dto],
     )
     mocker.patch(
-        "services.indexer.src.processing.analyze_scientific_content",
+        "packages.shared_utils.src.processing.analyze_scientific_content",
         new_callable=AsyncMock,
         return_value=None,
     )
@@ -160,17 +159,17 @@ async def test_process_source_multiple_chunks(
     result.keywords = []
 
     mocker.patch(
-        "services.indexer.src.processing.extract_bytes",
+        "packages.shared_utils.src.processing.extract_bytes",
         new_callable=AsyncMock,
         return_value=result,
     )
     mocker.patch(
-        "services.indexer.src.processing.index_chunks",
+        "packages.shared_utils.src.processing.index_chunks",
         new_callable=AsyncMock,
         return_value=vectors,
     )
     mocker.patch(
-        "services.indexer.src.processing.analyze_scientific_content",
+        "packages.shared_utils.src.processing.analyze_scientific_content",
         new_callable=AsyncMock,
         return_value=None,
     )
@@ -206,21 +205,21 @@ async def test_process_source_json_content(
     result.keywords = []
 
     mocker.patch(
-        "services.indexer.src.processing.extract_bytes",
+        "packages.shared_utils.src.processing.extract_bytes",
         new_callable=AsyncMock,
         return_value=result,
     )
     mocker.patch(
-        "services.indexer.src.processing.index_chunks",
+        "packages.shared_utils.src.processing.index_chunks",
         new_callable=AsyncMock,
         return_value=[mock_vector_dto],
     )
     mock_serialize = mocker.patch(
-        "services.indexer.src.processing.serialize",
+        "packages.shared_utils.src.processing.serialize",
         return_value=b'{"key":"value","nested":{"data":"test"}}',
     )
     mocker.patch(
-        "services.indexer.src.processing.analyze_scientific_content",
+        "packages.shared_utils.src.processing.analyze_scientific_content",
         new_callable=AsyncMock,
         return_value=None,
     )
@@ -250,17 +249,17 @@ async def test_process_source_empty_content(
     result.keywords = []
 
     mocker.patch(
-        "services.indexer.src.processing.extract_bytes",
+        "packages.shared_utils.src.processing.extract_bytes",
         new_callable=AsyncMock,
         return_value=result,
     )
     mock_index_chunks = mocker.patch(
-        "services.indexer.src.processing.index_chunks",
+        "packages.shared_utils.src.processing.index_chunks",
         new_callable=AsyncMock,
         return_value=[],
     )
     mocker.patch(
-        "services.indexer.src.processing.analyze_scientific_content",
+        "packages.shared_utils.src.processing.analyze_scientific_content",
         new_callable=AsyncMock,
         return_value=None,
     )
@@ -286,7 +285,7 @@ async def test_process_source_with_extraction_error(
     mocker: MockerFixture,
 ) -> None:
     mocker.patch(
-        "services.indexer.src.processing.extract_bytes",
+        "packages.shared_utils.src.processing.extract_bytes",
         new_callable=AsyncMock,
         side_effect=Exception("Extraction failed"),
     )

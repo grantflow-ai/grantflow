@@ -3,9 +3,11 @@ from typing import TYPE_CHECKING, Any, Literal
 from uuid import UUID, uuid4
 
 if TYPE_CHECKING:
+    from packages.db.src.json_objects import ScientificAnalysisResult
     from packages.shared_utils.src.extraction import DocumentMetadata
 else:
     DocumentMetadata = dict
+    ScientificAnalysisResult = dict
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
@@ -258,9 +260,7 @@ class RagSource(BaseWithUUIDPK):
     }
 
     source_type: Mapped[Literal["rag_file", "rag_url"]] = mapped_column(String(50))
-
-    # Scientific analysis extracted from document content (stored as JSON)
-    scientific_analysis_json: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
+    scientific_analysis_json: Mapped["ScientificAnalysisResult | None"] = mapped_column(JSONB, nullable=True)
     scientific_analysis_updated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, default=None
     )

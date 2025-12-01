@@ -1,6 +1,4 @@
-"""
-~keep
-Red Team Output - Saves grant application outputs for review and testing.
+"""Red Team Output - Saves grant application outputs for review and testing.
 
 This module provides functionality to export complete grant application text,
 section breakdowns, and editorial workflow outputs after pipeline completion.
@@ -10,13 +8,13 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from textwrap import dedent
 from typing import TYPE_CHECKING
 
 from packages.shared_utils.src.logger import get_logger
 
 if TYPE_CHECKING:
-    from packages.db.src.json_objects import GrantElement, GrantLongFormSection
-    from packages.shared_utils.src.scientific_analysis import ScientificAnalysisResult
+    from packages.db.src.json_objects import GrantElement, GrantLongFormSection, ScientificAnalysisResult
 
     from services.rag.src.dto import (
         EditorialStatsDTO,
@@ -35,9 +33,7 @@ def save_application_output(
     output_format: str = "md",
     output_dir: str | None = None,
 ) -> Path:
-    """
-    ~keep
-    Save final grant application output to file for red team review.
+    """Save final grant application output to file for red team review.
 
     Args:
         application_id: UUID of the grant application
@@ -66,16 +62,17 @@ def save_application_output(
     word_count = len(application_text.split())
     char_count = len(application_text)
 
-    header = f"""---
-Application ID: {application_id}
-Title: {application_title}
-Generated: {timestamp.isoformat()}
-Word Count: {word_count:,}
-Character Count: {char_count:,}
-Output Format: {output_format}
----
+    header = dedent(f"""\
+        ---
+        Application ID: {application_id}
+        Title: {application_title}
+        Generated: {timestamp.isoformat()}
+        Word Count: {word_count:,}
+        Character Count: {char_count:,}
+        Output Format: {output_format}
+        ---
 
-"""
+        """)
 
     full_content = header + application_text
 
@@ -109,9 +106,7 @@ def save_sections_breakdown(
     section_texts: dict[str, str],
     output_dir: str | None = None,
 ) -> Path:
-    """
-    ~keep
-    Save detailed section-by-section breakdown for analysis.
+    """Save detailed section-by-section breakdown for analysis.
 
     Args:
         application_id: UUID of the grant application
@@ -206,9 +201,7 @@ def save_editorial_workflow_output(
     statistics: EditorialStatsDTO,
     output_dir: str | None = None,
 ) -> Path:
-    """
-    ~keep
-    Save complete editorial workflow output: original → review → edits → final.
+    """Save complete editorial workflow output: original → review → edits → final.
 
     Args:
         application_id: UUID of the grant application
@@ -364,9 +357,7 @@ def save_scientific_analysis_output(
     analysis_result: ScientificAnalysisResult,
     output_dir: str | None = None,
 ) -> Path:
-    """
-    ~keep
-    Save scientific analysis output for a source document.
+    """Save scientific analysis output for a source document.
 
     Args:
         source_id: UUID of the source document
@@ -630,9 +621,7 @@ def save_comparison_output(
     analysis_stats: dict[str, int | list[dict[str, str]]] | None = None,
     output_dir: str | None = None,
 ) -> tuple[Path, Path]:
-    """
-    ~keep
-    Save before/after comparison MD files for domain expert review.
+    """Save before/after comparison MD files for domain expert review.
 
     Args:
         baseline_text: Work plan text generated WITHOUT argument_structure
@@ -662,22 +651,23 @@ def save_comparison_output(
     baseline_path = date_dir / baseline_filename
 
     baseline_word_count = len(baseline_text.split())
-    baseline_header = f"""---
-# BASELINE OUTPUT (Without Argument Structure)
+    baseline_header = dedent(f"""\
+        ---
+        # BASELINE OUTPUT (Without Argument Structure)
 
-**Scenario**: {scenario_name}
-**Generated**: {timestamp.isoformat()}
-**Mode**: BASELINE (argument_structure=None)
-**Word Count**: {baseline_word_count:,}
+        **Scenario**: {scenario_name}
+        **Generated**: {timestamp.isoformat()}
+        **Mode**: BASELINE (argument_structure=None)
+        **Word Count**: {baseline_word_count:,}
 
----
+        ---
 
-> **Note**: This output was generated WITHOUT the scientific analysis argument structure.
-> Compare this with the WITH_ANALYSIS version to evaluate the impact of structured analysis.
+        > **Note**: This output was generated WITHOUT the scientific analysis argument structure.
+        > Compare this with the WITH_ANALYSIS version to evaluate the impact of structured analysis.
 
----
+        ---
 
-"""
+        """)
     baseline_content = baseline_header + baseline_text
 
     try:
@@ -699,39 +689,41 @@ def save_comparison_output(
 
     analysis_stats_section = ""
     if analysis_stats:
-        analysis_stats_section = f"""
-## Scientific Analysis Statistics
+        pivot_points_value = analysis_stats.get("pivot_points_found")
+        if pivot_points_value is None:
+            pivot_points_raw = analysis_stats.get("pivot_points")
+            pivot_points_value = len(pivot_points_raw) if isinstance(pivot_points_raw, list) else 0
+        analysis_stats_section = dedent(f"""\
+            ## Scientific Analysis Statistics
 
-| Element | Count |
-|---------|-------|
-| Arguments | {analysis_stats.get("total_arguments", "N/A")} |
-| Evidence | {analysis_stats.get("total_evidence", "N/A")} |
-| Hypotheses | {analysis_stats.get("total_hypotheses", "N/A")} |
-| Conclusions | {analysis_stats.get("total_conclusions", "N/A")} |
-| Objectives | {analysis_stats.get("total_objectives", "N/A")} |
-| Tasks | {analysis_stats.get("total_tasks", "N/A")} |
-| Pivot Points | {analysis_stats.get("pivot_points_found", len(analysis_stats.get("pivot_points", [])))} |"""  # type: ignore[arg-type]
+            | Element | Count |
+            |---------|-------|
+            | Arguments | {analysis_stats.get("total_arguments", "N/A")} |
+            | Evidence | {analysis_stats.get("total_evidence", "N/A")} |
+            | Hypotheses | {analysis_stats.get("total_hypotheses", "N/A")} |
+            | Conclusions | {analysis_stats.get("total_conclusions", "N/A")} |
+            | Objectives | {analysis_stats.get("total_objectives", "N/A")} |
+            | Tasks | {analysis_stats.get("total_tasks", "N/A")} |
+            | Pivot Points | {pivot_points_value} |
+            """)
 
-    baseline_header = baseline_header + """
+    with_analysis_header = dedent(f"""\
+        ---
+        # WITH ANALYSIS OUTPUT (With Argument Structure)
 
-"""
+        **Scenario**: {scenario_name}
+        **Generated**: {timestamp.isoformat()}
+        **Mode**: WITH_ANALYSIS (argument_structure=aggregated data)
+        **Word Count**: {with_analysis_word_count:,}
 
-    with_analysis_header = f"""---
-# WITH ANALYSIS OUTPUT (With Argument Structure)
+        ---
 
-**Scenario**: {scenario_name}
-**Generated**: {timestamp.isoformat()}
-**Mode**: WITH_ANALYSIS (argument_structure=aggregated data)
-**Word Count**: {with_analysis_word_count:,}
+        > **Note**: This output was generated WITH the scientific analysis argument structure.
+        > The LLM received extracted arguments, evidence, objectives, and tasks from source materials.
 
----
+        {analysis_stats_section}---
 
-> **Note**: This output was generated WITH the scientific analysis argument structure.
-> The LLM received extracted arguments, evidence, objectives, and tasks from source materials.
-
-{analysis_stats_section}---
-
-"""
+        """)
     with_analysis_content = with_analysis_header + with_analysis_text
 
     try:

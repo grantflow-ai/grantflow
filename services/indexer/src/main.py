@@ -22,7 +22,6 @@ from packages.shared_utils.src.gcs import (
 from packages.shared_utils.src.logger import get_logger
 from packages.shared_utils.src.otel import configure_otel
 from packages.shared_utils.src.pubsub import PubSubEvent
-from packages.shared_utils.src.serialization import serialize
 from packages.shared_utils.src.server import create_litestar_app
 from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -314,7 +313,7 @@ async def handle_file_indexing(  # noqa: PLR0912
             processing_duration_ms=round((time.time() - processing_start) * 1000, 2),
             text_length=len(text_content),
             vector_count=len(vectors) if vectors else 0,
-            scientific_analysis_available=scientific_analysis is not None,
+            has_scientific_analysis=scientific_analysis is not None,
             trace_id=trace_id,
         )
 
@@ -330,7 +329,7 @@ async def handle_file_indexing(  # noqa: PLR0912
                 indexing_status=SourceIndexingStatusEnum.FINISHED,
                 trace_id=trace_id,
                 document_metadata=document_metadata,
-                scientific_analysis_json=serialize(scientific_analysis).decode() if scientific_analysis else None,
+                scientific_analysis_json=scientific_analysis,
             )
         else:
             async with session_maker() as session, session.begin():
@@ -342,7 +341,7 @@ async def handle_file_indexing(  # noqa: PLR0912
                     update_values["document_metadata"] = dict(document_metadata)
 
                 if scientific_analysis is not None:
-                    update_values["scientific_analysis_json"] = serialize(scientific_analysis).decode()
+                    update_values["scientific_analysis_json"] = scientific_analysis
                     update_values["scientific_analysis_updated_at"] = datetime.now(UTC)
 
                 await session.execute(

@@ -1,6 +1,4 @@
-"""
-~keep
-Scientific Grant Editor - Comprehensive editorial review of grant applications.
+"""Scientific Grant Editor - Comprehensive editorial review of grant applications.
 
 Uses Gemini Flash to perform editorial review of generated grant applications with dual focus:
 1. Data Verification: Ensures all facts, numbers, and entities are accurately preserved from RAG
@@ -19,6 +17,7 @@ from packages.db.src.query_helpers import select_active
 from packages.db.src.tables import GrantApplication
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.constants import SELECTIVE_EDITING_THINKING_BUDGET
 from services.rag.src.dto import RedTeamReviewDTO, SelectiveEditsDTO
@@ -26,8 +25,7 @@ from services.rag.src.utils.completion import handle_completions_request
 from services.rag.src.utils.retrieval import retrieve_documents
 
 if TYPE_CHECKING:
-    from packages.db.src.json_objects import ResearchObjective
-    from packages.shared_utils.src.scientific_analysis import ScientificAnalysisResult
+    from packages.db.src.json_objects import ResearchObjective, ScientificAnalysisResult
 
 
 CRITICAL_REVIEWER_SYSTEM_PROMPT = """You are the LAST SCIENTIFIC EDITOR reviewing this grant proposal before final submission. Your role is comprehensive editorial review ensuring the proposal is polished, accurate, and ready for evaluation.
@@ -394,61 +392,18 @@ logger = get_logger(__name__)
 
 
 def _format_argument_structure_for_review(argument_structure: "ScientificAnalysisResult | None") -> str:
-    """Format scientific analysis results as additional context for editorial review."""
+    """Format scientific analysis data for editorial review.
+
+    Args:
+        argument_structure: Extracted scientific analysis containing arguments, evidence,
+            hypotheses, and conclusions with source attribution and metadata.
+
+    Returns:
+        Formatted JSON string or empty string if no analysis is provided.
+    """
     if argument_structure is None:
         return ""
-
-    sections = []
-
-    # Add extracted evidence for fact verification
-    evidence = argument_structure.get("evidence", [])
-    if evidence:
-        ev_lines = []
-        for ev in evidence:
-            ev_type = ev.get("type", "")
-            source = ev.get("source", "")
-            ev_lines.append(f"- [{ev_type}] {ev['text']} (Source: {source})")
-        if ev_lines:
-            sections.append("### Extracted Evidence from Source Materials\n" + "\n".join(ev_lines))
-
-    # Add arguments with source attribution
-    arguments = argument_structure.get("arguments", [])
-    if arguments:
-        arg_lines = []
-        for arg in arguments:
-            source = arg.get("source", "")
-            strength = arg.get("strength", "")
-            arg_lines.append(f"- [{strength}] {arg['text']} (Source: {source})")
-        if arg_lines:
-            sections.append("### Extracted Arguments from Source Materials\n" + "\n".join(arg_lines))
-
-    # Add sources for citation verification
-    sources = argument_structure.get("sources", [])
-    if sources:
-        src_lines = [f"- {src['text']}" for src in sources]
-        if src_lines:
-            sections.append("### Cited Sources from Materials\n" + "\n".join(src_lines))
-
-    if not sections:
-        return ""
-
-    return (
-        """### 4. Scientific Analysis (Structured Extraction from Source Materials)
-
-**IMPORTANT: You have access to structured scientific analysis data. USE THIS DATA for:**
-
-1. **Evidence-based fact verification**: Cross-reference proposal claims against the extracted evidence. Flag any claims that contradict or are unsupported by this evidence.
-2. **Source attribution checking**: Verify that claims attributed to "writers" (proposal authors) vs "non_writers" (RAG/literature) are correctly distinguished.
-3. **Argument validation**: Check if the proposal's arguments align with the extracted argument structure. Flag logical gaps or unsupported leaps.
-4. **Citation verification**: Use the extracted sources to verify that referenced works are accurately cited.
-5. **Temporal consistency**: Ensure the proposal correctly distinguishes between past findings (evidence), current work (experiment), and future goals (objectives/tasks).
-
-When reviewing, explicitly reference this structured data to provide precise, evidence-grounded feedback.
-
-"""
-        + "\n\n".join(sections)
-        + "\n\n"
-    )
+    return serialize(argument_structure).decode()
 
 
 async def retrieve_knowledge_base_for_application(
@@ -520,9 +475,7 @@ async def perform_critical_review(
     argument_structure: "ScientificAnalysisResult | None" = None,
     trace_id: str,
 ) -> RedTeamReviewDTO:
-    """
-    ~keep
-    Run comprehensive editorial review on grant application.
+    """Run comprehensive editorial review on grant application.
 
     Performs dual-focus editorial review:
     1. Data Verification: Checks that all facts, numbers, entities match RAG source
@@ -620,9 +573,7 @@ async def apply_selective_edits(
     knowledge_base: str,
     trace_id: str,
 ) -> SelectiveEditsDTO:
-    """
-    ~keep
-    Selectively apply editorial suggestions to a grant proposal.
+    """Selectively apply editorial suggestions to a grant proposal.
 
     This function acts as a "Great Application Editor" that:
     1. Reads the original proposal, review, and RAG knowledge base

@@ -126,3 +126,128 @@ class CFPAnalysis(TypedDict):
     global_constraints: list[LengthConstraint]
     organization: NotRequired[OrganizationNamespace | None]
     activity_code: NotRequired[str | None]
+
+
+class ArgumentElement(TypedDict):
+    id: int
+    text: str
+    context: str
+    type: str
+    source: str
+    temporal_context: str
+    temporal_order: float
+    action_type: str
+    pivot: bool
+    rhetorical_action: str
+    hierarchy: str
+
+
+class EvidenceElement(TypedDict):
+    id: int
+    text: str
+    type: str
+    supports: str
+    source: str
+    temporal_context: str
+    temporal_order: float
+    action_type: str
+    pivot: bool
+    rhetorical_action: str
+    hierarchy: str
+
+
+class HypothesisElement(TypedDict):
+    id: int
+    text: str
+    type: str
+    testable: str
+    source: str
+    temporal_context: str
+    temporal_order: float
+    action_type: str
+    pivot: bool
+    rhetorical_action: str
+    hierarchy: str
+
+
+class ConclusionElement(TypedDict):
+    id: int
+    text: str
+    type: str
+    based_on: str
+    source: str
+    temporal_context: str
+    temporal_order: float
+    action_type: str
+    pivot: bool
+    rhetorical_action: str
+    hierarchy: str
+
+
+class ExperimentResultElement(TypedDict):
+    id: int
+    text: str
+    experiment: str
+    outcome: str
+    significance: NotRequired[str]
+    source: str
+    temporal_context: str
+    temporal_order: float
+    action_type: str
+    pivot: bool
+    rhetorical_action: str
+    hierarchy: str
+
+
+class SourceElement(TypedDict):
+    id: int
+    text: str
+    type: str
+    relevance: str
+
+
+class ObjectiveElement(TypedDict):
+    id: int
+    text: str
+    scope: str
+    expected_outcome: str
+    type: str
+    temporal_context: str
+    temporal_order: float
+    hierarchy: str
+
+
+class TaskElement(TypedDict):
+    id: int
+    text: str
+    action: str
+    deliverable: str
+    supports_objective: int
+    depends_on: list[int]
+    temporal_context: str
+    temporal_order: float
+    hierarchy: str
+
+
+class AnalysisMetadata(TypedDict):
+    total_arguments: int
+    total_evidence: int
+    total_hypotheses: int
+    total_conclusions: int
+    total_results: int
+    total_sources: int
+    total_objectives: int
+    total_tasks: int
+    article_type: str
+
+
+class ScientificAnalysisResult(TypedDict):
+    arguments: list[ArgumentElement]
+    evidence: list[EvidenceElement]
+    hypotheses: list[HypothesisElement]
+    conclusions: list[ConclusionElement]
+    experiment_results: list[ExperimentResultElement]
+    sources: list[SourceElement]
+    objectives: list[ObjectiveElement]
+    tasks: list[TaskElement]
+    metadata: AnalysisMetadata

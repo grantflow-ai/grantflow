@@ -6,11 +6,13 @@ import msgspec
 from packages.db.src.json_objects import (
     GrantLongFormSection,
     ResearchDeepDive,
+    ScientificAnalysisResult,
     TranslationalResearchDeepDive,
 )
 from packages.shared_utils.src.ai import GENERATION_MODEL
 from packages.shared_utils.src.exceptions import EvaluationError
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.serialization import serialize
 from packages.shared_utils.src.sync import batched_gather
 
 from services.rag.src.dto import ResearchComponentGenerationDTO
@@ -23,8 +25,6 @@ from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.source_validation import handle_source_validation
 
 if TYPE_CHECKING:
-    from packages.shared_utils.src.scientific_analysis import ScientificAnalysisResult
-
     from services.rag.src.grant_application.dto import StageDTO
     from services.rag.src.utils.job_manager import JobManager
 
@@ -250,67 +250,19 @@ def _format_relationships(component: ResearchComponentGenerationDTO) -> str:
     return "\n".join(f"- {component['number']} -> {target}: {description}" for target, description in relationships)
 
 
-def _format_argument_structure(argument_structure: "ScientificAnalysisResult | None") -> str:
-    """Format scientific analysis results as context for work plan generation."""
+def _format_argument_structure(argument_structure: ScientificAnalysisResult | None) -> str:
+    """Format scientific analysis data for LLM consumption.
+
+    Args:
+        argument_structure: Extracted scientific analysis containing arguments, evidence,
+            hypotheses, objectives, and tasks with metadata annotations.
+
+    Returns:
+        Formatted JSON string or empty string if no analysis is provided.
+    """
     if argument_structure is None:
         return ""
-
-    sections = []
-
-    # Add relevant objectives from source analysis
-    objectives = argument_structure.get("objectives", [])
-    if objectives:
-        obj_lines = [f"- {obj['text']}" for obj in objectives]
-        if obj_lines:
-            sections.append("### Research Objectives from Source Materials\n" + "\n".join(obj_lines))
-
-    # Add relevant tasks with dependencies
-    tasks = argument_structure.get("tasks", [])
-    if tasks:
-        task_lines = []
-        for task in tasks:
-            deps = task.get("depends_on", [])
-            dep_str = f" (depends on: {', '.join(str(d) for d in deps)})" if deps else ""
-            task_lines.append(f"- Task {task['id']}: {task['text']}{dep_str}")
-        if task_lines:
-            sections.append("### Tasks from Source Materials\n" + "\n".join(task_lines))
-
-    # Add key arguments that support the research
-    arguments = argument_structure.get("arguments", [])
-    if arguments:
-        arg_lines = []
-        for arg in arguments:
-            strength = arg.get("strength", "")
-            arg_lines.append(f"- [{strength}] {arg['text']}")
-        if arg_lines:
-            sections.append("### Key Arguments from Source Materials\n" + "\n".join(arg_lines))
-
-    # Add supporting evidence
-    evidence = argument_structure.get("evidence", [])
-    if evidence:
-        ev_lines = []
-        for ev in evidence:
-            ev_type = ev.get("type", "")
-            ev_lines.append(f"- [{ev_type}] {ev['text']}")
-        if ev_lines:
-            sections.append("### Supporting Evidence from Source Materials\n" + "\n".join(ev_lines))
-
-    if not sections:
-        return ""
-
-    return """## Scientific Analysis Context
-
-**IMPORTANT: You have access to structured scientific analysis data extracted from source materials. USE THIS DATA to:**
-
-1. **Ground your writing in evidence**: Reference the extracted arguments and evidence when making claims
-2. **Align with source objectives**: Ensure your component aligns with the research objectives from the source materials
-3. **Respect task dependencies**: When writing tasks, acknowledge prerequisites and logical sequencing from the extracted task structure
-4. **Cite specific data**: Use concrete numbers, findings, and evidence from the extracted elements rather than making generic statements
-5. **Build on existing arguments**: Strengthen your writing by connecting to the argument chains already established in the source materials
-
-The following elements were extracted from source materials:
-
-""" + "\n\n".join(sections)
+    return serialize(argument_structure).decode()
 
 
 async def adjust_component_length(

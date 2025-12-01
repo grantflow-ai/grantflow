@@ -27,6 +27,7 @@ from packages.shared_utils.src.exceptions import ValidationError
 if TYPE_CHECKING:
     from structlog.typing import FilteringBoundLogger
 
+    from packages.db.src.json_objects import ScientificAnalysisResult
     from packages.shared_utils.src.extraction import DocumentMetadata
 else:
     DocumentMetadata = dict
@@ -127,7 +128,7 @@ async def update_source_indexing_status(
     indexing_status: SourceIndexingStatusEnum,
     trace_id: str,
     document_metadata: DocumentMetadata | None = None,
-    scientific_analysis_json: str | None = None,
+    scientific_analysis_json: "ScientificAnalysisResult | None" = None,
     error_type: str | None = None,
     error_message: str | None = None,
 ) -> None:

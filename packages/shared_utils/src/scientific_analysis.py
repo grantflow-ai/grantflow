@@ -7,9 +7,21 @@ rich metadata vectors for enhanced retrieval.
 
 import asyncio
 from datetime import UTC, datetime
-from typing import Final, NotRequired, TypedDict, cast
+from typing import Final, cast
 
 from google import genai
+from packages.db.src.json_objects import (
+    AnalysisMetadata,
+    ArgumentElement,
+    ConclusionElement,
+    EvidenceElement,
+    ExperimentResultElement,
+    HypothesisElement,
+    ObjectiveElement,
+    ScientificAnalysisResult,
+    SourceElement,
+    TaskElement,
+)
 from packages.shared_utils.src.ai import GEMINI_FLASH_MODEL, get_google_ai_client
 from packages.shared_utils.src.constants import CONTENT_TYPE_JSON
 from packages.shared_utils.src.exceptions import ValidationError
@@ -652,132 +664,6 @@ scientific_analysis_schema: Final[dict[str, object]] = {
         "metadata",
     ],
 }
-
-
-# TypedDict definitions for type safety
-class ArgumentElement(TypedDict):
-    id: int
-    text: str
-    context: str
-    type: str
-    source: str
-    temporal_context: str
-    temporal_order: float
-    action_type: str
-    pivot: bool
-    rhetorical_action: str
-    hierarchy: str
-
-
-class EvidenceElement(TypedDict):
-    id: int
-    text: str
-    type: str
-    supports: str
-    source: str
-    temporal_context: str
-    temporal_order: float
-    action_type: str
-    pivot: bool
-    rhetorical_action: str
-    hierarchy: str
-
-
-class HypothesisElement(TypedDict):
-    id: int
-    text: str
-    type: str
-    testable: str
-    source: str
-    temporal_context: str
-    temporal_order: float
-    action_type: str
-    pivot: bool
-    rhetorical_action: str
-    hierarchy: str
-
-
-class ConclusionElement(TypedDict):
-    id: int
-    text: str
-    type: str
-    based_on: str
-    source: str
-    temporal_context: str
-    temporal_order: float
-    action_type: str
-    pivot: bool
-    rhetorical_action: str
-    hierarchy: str
-
-
-class ExperimentResultElement(TypedDict):
-    id: int
-    text: str
-    experiment: str
-    outcome: str
-    significance: NotRequired[str]
-    source: str
-    temporal_context: str
-    temporal_order: float
-    action_type: str
-    pivot: bool
-    rhetorical_action: str
-    hierarchy: str
-
-
-class SourceElement(TypedDict):
-    id: int
-    text: str
-    type: str
-    relevance: str
-
-
-class ObjectiveElement(TypedDict):
-    id: int
-    text: str
-    scope: str
-    expected_outcome: str
-    type: str
-    temporal_context: str
-    temporal_order: float
-    hierarchy: str
-
-
-class TaskElement(TypedDict):
-    id: int
-    text: str
-    action: str
-    deliverable: str
-    supports_objective: int
-    depends_on: list[int]
-    temporal_context: str
-    temporal_order: float
-    hierarchy: str
-
-
-class AnalysisMetadata(TypedDict):
-    total_arguments: int
-    total_evidence: int
-    total_hypotheses: int
-    total_conclusions: int
-    total_results: int
-    total_sources: int
-    total_objectives: int
-    total_tasks: int
-    article_type: str
-
-
-class ScientificAnalysisResult(TypedDict):
-    arguments: list[ArgumentElement]
-    evidence: list[EvidenceElement]
-    hypotheses: list[HypothesisElement]
-    conclusions: list[ConclusionElement]
-    experiment_results: list[ExperimentResultElement]
-    sources: list[SourceElement]
-    objectives: list[ObjectiveElement]
-    tasks: list[TaskElement]
-    metadata: AnalysisMetadata
 
 
 def validate_scientific_analysis(result: ScientificAnalysisResult) -> None:
