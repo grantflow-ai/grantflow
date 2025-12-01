@@ -77,12 +77,24 @@ tasks:
   lint:
     desc: "Run all linters WITH auto-fix enabled"
     cmds:
+      - task: lint:frontend
       - prek run --all-files {{.CLI_ARGS}}
 
   lint:check:
     desc: "Run all linters WITHOUT auto-fix (check-only mode) - CI-friendly"
     cmds:
       - prek run --all-files --check {{.CLI_ARGS}}
+
+  lint:frontend:
+    desc: "Run frontend linting (biome, oxlint, eslint, typecheck)"
+    dir: frontend
+    cmds:
+      - cmd: |
+          set -euo pipefail
+          if ! pnpm exec oxlint .; then
+            pnpm dlx oxlint .
+          fi
+      - pnpm lint
 
   format:
     desc: "Format all code with modifications"

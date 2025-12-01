@@ -19,6 +19,7 @@ import {
 import { AppButton } from "@/components/app/buttons/app-button";
 import { AppInput } from "@/components/app/fields/app-input";
 import type { API } from "@/types/api-types";
+import { drop } from "@/utils/helpers";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 
@@ -133,9 +134,7 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 					onChange={(e) => {
 						setFullName(e.target.value);
 						if (errors.fullName) {
-							// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit fullName
-							const { fullName, ...rest } = errors;
-							setErrors(rest);
+							setErrors(drop(errors, "fullName"));
 						}
 					}}
 					placeholder="Enter full institution name"
@@ -166,9 +165,7 @@ export function GrantingInstitutionForm({ institution, mode }: GrantingInstituti
 					onChange={(e) => {
 						setAbbreviation(e.target.value);
 						if (errors.abbreviation) {
-							// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit abbreviation
-							const { abbreviation, ...rest } = errors;
-							setErrors(rest);
+							setErrors(drop(errors, "abbreviation"));
 						}
 					}}
 					placeholder="Enter abbreviation (optional)"

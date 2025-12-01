@@ -251,9 +251,59 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
+	predefined_template?: {
+	activity_code?: string;
+	created_at: string;
+	description?: string;
+	grant_sections: ({
+	definition?: null | string;
+	depends_on: string[];
+	evidence: string;
+	generation_instructions: string;
+	guidelines?: string[];
+	id: string;
+	is_clinical_trial: boolean | null;
+	is_detailed_research_plan: boolean | null;
+	keywords: string[];
+	length_constraint?: null | {
+	source: null | string;
+	type: "characters" | "words";
+	value: number;
+};
+	needs_applicant_writing?: boolean;
+	order: number;
+	parent_id: null | string;
+	requirements?: {
+	category: string;
+	quote_from_source: string;
+	requirement: string;
+}[];
+	search_queries: string[];
+	title: string;
+	topics: string[];
+} | {
+	evidence: string;
+	id: string;
+	needs_applicant_writing?: boolean;
+	order: number;
+	parent_id: null | string;
+	title: string;
+})[];
+	grant_type: string;
+	granting_institution?: {
+
+};
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+	sections_count: number;
+	updated_at: string;
+};
 	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
+	is_primary_source: boolean;
 	sourceId: string;
 	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
@@ -266,6 +316,7 @@ export namespace API {
 	project_id: string;
 	rag_sources: {
 	filename?: string;
+	is_primary_source: boolean;
 	sourceId: string;
 	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
@@ -998,9 +1049,59 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
+	predefined_template?: {
+	activity_code?: string;
+	created_at: string;
+	description?: string;
+	grant_sections: ({
+	definition?: null | string;
+	depends_on: string[];
+	evidence: string;
+	generation_instructions: string;
+	guidelines?: string[];
+	id: string;
+	is_clinical_trial: boolean | null;
+	is_detailed_research_plan: boolean | null;
+	keywords: string[];
+	length_constraint?: null | {
+	source: null | string;
+	type: "characters" | "words";
+	value: number;
+};
+	needs_applicant_writing?: boolean;
+	order: number;
+	parent_id: null | string;
+	requirements?: {
+	category: string;
+	quote_from_source: string;
+	requirement: string;
+}[];
+	search_queries: string[];
+	title: string;
+	topics: string[];
+} | {
+	evidence: string;
+	id: string;
+	needs_applicant_writing?: boolean;
+	order: number;
+	parent_id: null | string;
+	title: string;
+})[];
+	grant_type: string;
+	granting_institution?: {
+
+};
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+	sections_count: number;
+	updated_at: string;
+};
 	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
+	is_primary_source: boolean;
 	sourceId: string;
 	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
@@ -1013,6 +1114,7 @@ export namespace API {
 	project_id: string;
 	rag_sources: {
 	filename?: string;
+	is_primary_source: boolean;
 	sourceId: string;
 	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
@@ -2015,9 +2117,59 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
+	predefined_template?: {
+	activity_code?: string;
+	created_at: string;
+	description?: string;
+	grant_sections: ({
+	definition?: null | string;
+	depends_on: string[];
+	evidence: string;
+	generation_instructions: string;
+	guidelines?: string[];
+	id: string;
+	is_clinical_trial: boolean | null;
+	is_detailed_research_plan: boolean | null;
+	keywords: string[];
+	length_constraint?: null | {
+	source: null | string;
+	type: "characters" | "words";
+	value: number;
+};
+	needs_applicant_writing?: boolean;
+	order: number;
+	parent_id: null | string;
+	requirements?: {
+	category: string;
+	quote_from_source: string;
+	requirement: string;
+}[];
+	search_queries: string[];
+	title: string;
+	topics: string[];
+} | {
+	evidence: string;
+	id: string;
+	needs_applicant_writing?: boolean;
+	order: number;
+	parent_id: null | string;
+	title: string;
+})[];
+	grant_type: string;
+	granting_institution?: {
+
+};
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+	sections_count: number;
+	updated_at: string;
+};
 	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
+	is_primary_source: boolean;
 	sourceId: string;
 	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
@@ -2030,6 +2182,7 @@ export namespace API {
 	project_id: string;
 	rag_sources: {
 	filename?: string;
+	is_primary_source: boolean;
 	sourceId: string;
 	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
@@ -2073,6 +2226,7 @@ export namespace API {
 	description: null | string;
 	id: string;
 	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
+	is_primary_source: boolean;
 	title: null | string;
 	url: string;
 } | {
@@ -2080,6 +2234,7 @@ export namespace API {
 	filename: string;
 	id: string;
 	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
+	is_primary_source: boolean;
 	mime_type: string;
 	size: number;
 })[];
@@ -2107,6 +2262,7 @@ export namespace API {
 	description: null | string;
 	id: string;
 	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
+	is_primary_source: boolean;
 	title: null | string;
 	url: string;
 } | {
@@ -2114,6 +2270,7 @@ export namespace API {
 	filename: string;
 	id: string;
 	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
+	is_primary_source: boolean;
 	mime_type: string;
 	size: number;
 })[];
@@ -2142,6 +2299,7 @@ export namespace API {
 	description: null | string;
 	id: string;
 	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
+	is_primary_source: boolean;
 	title: null | string;
 	url: string;
 } | {
@@ -2149,6 +2307,7 @@ export namespace API {
 	filename: string;
 	id: string;
 	indexing_status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
+	is_primary_source: boolean;
 	mime_type: string;
 	size: number;
 })[];
@@ -2347,9 +2506,59 @@ export namespace API {
 };
 	granting_institution_id?: string;
 	id: string;
+	predefined_template?: {
+	activity_code?: string;
+	created_at: string;
+	description?: string;
+	grant_sections: ({
+	definition?: null | string;
+	depends_on: string[];
+	evidence: string;
+	generation_instructions: string;
+	guidelines?: string[];
+	id: string;
+	is_clinical_trial: boolean | null;
+	is_detailed_research_plan: boolean | null;
+	keywords: string[];
+	length_constraint?: null | {
+	source: null | string;
+	type: "characters" | "words";
+	value: number;
+};
+	needs_applicant_writing?: boolean;
+	order: number;
+	parent_id: null | string;
+	requirements?: {
+	category: string;
+	quote_from_source: string;
+	requirement: string;
+}[];
+	search_queries: string[];
+	title: string;
+	topics: string[];
+} | {
+	evidence: string;
+	id: string;
+	needs_applicant_writing?: boolean;
+	order: number;
+	parent_id: null | string;
+	title: string;
+})[];
+	grant_type: string;
+	granting_institution?: {
+
+};
+	guideline_source?: string;
+	guideline_version?: string;
+	id: string;
+	name: string;
+	sections_count: number;
+	updated_at: string;
+};
 	predefined_template_id?: string;
 	rag_sources: {
 	filename?: string;
+	is_primary_source: boolean;
 	sourceId: string;
 	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;
@@ -2362,6 +2571,7 @@ export namespace API {
 	project_id: string;
 	rag_sources: {
 	filename?: string;
+	is_primary_source: boolean;
 	sourceId: string;
 	status: "CREATED" | "FAILED" | "FINISHED" | "INDEXING" | "PENDING_UPLOAD";
 	url?: string;

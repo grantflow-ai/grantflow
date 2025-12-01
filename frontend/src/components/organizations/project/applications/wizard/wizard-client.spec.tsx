@@ -320,7 +320,7 @@ describe.sequential("WizardClientComponent", () => {
 
 		it("shows modal when first failed source appears", async () => {
 			const application = ApplicationWithTemplateFactory.build({
-				rag_sources: [{ filename: "corrupted.pdf", sourceId: "1", status: "FAILED" }],
+				rag_sources: [{ filename: "corrupted.pdf", is_primary_source: true, sourceId: "1", status: "FAILED" }],
 			});
 
 			useApplicationStore.setState({ application });
@@ -333,7 +333,7 @@ describe.sequential("WizardClientComponent", () => {
 
 		it("does not show modal when failed count stays the same", async () => {
 			const application = ApplicationWithTemplateFactory.build({
-				rag_sources: [{ filename: "corrupted.pdf", sourceId: "1", status: "FAILED" }],
+				rag_sources: [{ filename: "corrupted.pdf", is_primary_source: true, sourceId: "1", status: "FAILED" }],
 			});
 
 			useApplicationStore.setState({ application });
@@ -357,7 +357,7 @@ describe.sequential("WizardClientComponent", () => {
 
 		it("shows modal again when failed count increases", async () => {
 			const application1 = ApplicationWithTemplateFactory.build({
-				rag_sources: [{ filename: "corrupted1.pdf", sourceId: "1", status: "FAILED" }],
+				rag_sources: [{ filename: "corrupted1.pdf", is_primary_source: true, sourceId: "1", status: "FAILED" }],
 			});
 
 			useApplicationStore.setState({ application: application1 });
@@ -369,8 +369,8 @@ describe.sequential("WizardClientComponent", () => {
 
 			const application2 = ApplicationWithTemplateFactory.build({
 				rag_sources: [
-					{ filename: "corrupted1.pdf", sourceId: "1", status: "FAILED" },
-					{ filename: "corrupted2.pdf", sourceId: "2", status: "FAILED" },
+					{ filename: "corrupted1.pdf", is_primary_source: true, sourceId: "1", status: "FAILED" },
+					{ filename: "corrupted2.pdf", is_primary_source: true, sourceId: "2", status: "FAILED" },
 				],
 			});
 
@@ -384,8 +384,8 @@ describe.sequential("WizardClientComponent", () => {
 		it("does not show modal when there are INDEXING sources", async () => {
 			const application = ApplicationWithTemplateFactory.build({
 				rag_sources: [
-					{ filename: "corrupted.pdf", sourceId: "1", status: "FAILED" },
-					{ filename: "processing.pdf", sourceId: "2", status: "INDEXING" },
+					{ filename: "corrupted.pdf", is_primary_source: true, sourceId: "1", status: "FAILED" },
+					{ filename: "processing.pdf", is_primary_source: true, sourceId: "2", status: "INDEXING" },
 				],
 			});
 
@@ -400,8 +400,8 @@ describe.sequential("WizardClientComponent", () => {
 		it("does not show modal when there are CREATED sources", async () => {
 			const application = ApplicationWithTemplateFactory.build({
 				rag_sources: [
-					{ filename: "corrupted.pdf", sourceId: "1", status: "FAILED" },
-					{ filename: "new.pdf", sourceId: "2", status: "CREATED" },
+					{ filename: "corrupted.pdf", is_primary_source: true, sourceId: "1", status: "FAILED" },
+					{ filename: "new.pdf", is_primary_source: true, sourceId: "2", status: "CREATED" },
 				],
 			});
 
@@ -429,8 +429,8 @@ describe.sequential("WizardClientComponent", () => {
 		it("does not show modal when there are no failed sources", async () => {
 			const application = ApplicationWithTemplateFactory.build({
 				rag_sources: [
-					{ filename: "success.pdf", sourceId: "1", status: "FINISHED" },
-					{ filename: "success2.pdf", sourceId: "2", status: "FINISHED" },
+					{ filename: "success.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+					{ filename: "success2.pdf", is_primary_source: true, sourceId: "2", status: "FINISHED" },
 				],
 			});
 
@@ -445,8 +445,8 @@ describe.sequential("WizardClientComponent", () => {
 		it("shows modal when failed count decreases then increases", async () => {
 			const application1 = ApplicationWithTemplateFactory.build({
 				rag_sources: [
-					{ filename: "corrupted1.pdf", sourceId: "1", status: "FAILED" },
-					{ filename: "corrupted2.pdf", sourceId: "2", status: "FAILED" },
+					{ filename: "corrupted1.pdf", is_primary_source: true, sourceId: "1", status: "FAILED" },
+					{ filename: "corrupted2.pdf", is_primary_source: true, sourceId: "2", status: "FAILED" },
 				],
 			});
 
@@ -458,7 +458,7 @@ describe.sequential("WizardClientComponent", () => {
 			});
 
 			const application2 = ApplicationWithTemplateFactory.build({
-				rag_sources: [{ filename: "corrupted1.pdf", sourceId: "1", status: "FAILED" }],
+				rag_sources: [{ filename: "corrupted1.pdf", is_primary_source: true, sourceId: "1", status: "FAILED" }],
 			});
 
 			useApplicationStore.setState({ application: application2 });
@@ -469,8 +469,8 @@ describe.sequential("WizardClientComponent", () => {
 
 			const application3 = ApplicationWithTemplateFactory.build({
 				rag_sources: [
-					{ filename: "corrupted1.pdf", sourceId: "1", status: "FAILED" },
-					{ filename: "corrupted3.pdf", sourceId: "3", status: "FAILED" },
+					{ filename: "corrupted1.pdf", is_primary_source: true, sourceId: "1", status: "FAILED" },
+					{ filename: "corrupted3.pdf", is_primary_source: true, sourceId: "3", status: "FAILED" },
 				],
 			});
 
@@ -483,7 +483,9 @@ describe.sequential("WizardClientComponent", () => {
 
 		it("shows modal only after INDEXING completes and failure detected", async () => {
 			const application1 = ApplicationWithTemplateFactory.build({
-				rag_sources: [{ filename: "processing.pdf", sourceId: "1", status: "INDEXING" }],
+				rag_sources: [
+					{ filename: "processing.pdf", is_primary_source: true, sourceId: "1", status: "INDEXING" },
+				],
 			});
 
 			useApplicationStore.setState({ application: application1 });
@@ -494,7 +496,7 @@ describe.sequential("WizardClientComponent", () => {
 			expect(mockDialogOpen).not.toHaveBeenCalled();
 
 			const application2 = ApplicationWithTemplateFactory.build({
-				rag_sources: [{ filename: "processing.pdf", sourceId: "1", status: "FAILED" }],
+				rag_sources: [{ filename: "processing.pdf", is_primary_source: true, sourceId: "1", status: "FAILED" }],
 			});
 
 			useApplicationStore.setState({ application: application2 });
@@ -518,7 +520,7 @@ describe.sequential("WizardClientComponent", () => {
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
 					id: "template-1",
-					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+					rag_sources: [{ filename: "test.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" }],
 				}),
 			});
 
@@ -532,7 +534,7 @@ describe.sequential("WizardClientComponent", () => {
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [GrantSectionBaseFactory.build({ id: "section-1", title: "Section 1" })],
 					id: "template-1",
-					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+					rag_sources: [{ filename: "test.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" }],
 				}),
 			});
 
@@ -551,7 +553,7 @@ describe.sequential("WizardClientComponent", () => {
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
 					id: "template-1",
-					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+					rag_sources: [{ filename: "test.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" }],
 				}),
 			});
 
@@ -694,7 +696,7 @@ describe.sequential("WizardClientComponent", () => {
 						GrantSectionBaseFactory.build({ id: "section-2", order: 1, title: "Section 2" }),
 					],
 					id: "template-1",
-					rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+					rag_sources: [{ filename: "test.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" }],
 				}),
 			});
 

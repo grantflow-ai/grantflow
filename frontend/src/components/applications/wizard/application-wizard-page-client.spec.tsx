@@ -126,7 +126,9 @@ describe("ApplicationWizardPageClient", () => {
 					],
 				}),
 				id: "app-123",
-				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+				rag_sources: [
+					{ filename: "test.pdf", is_primary_source: true, sourceId: "source-1", status: "FINISHED" },
+				],
 				research_objectives: [
 					{
 						description: "Description 1",
@@ -214,7 +216,9 @@ describe("ApplicationWizardPageClient", () => {
 					],
 				}),
 				id: "app-123",
-				rag_sources: [{ filename: "test.pdf", sourceId: "source-1", status: "FINISHED" }],
+				rag_sources: [
+					{ filename: "test.pdf", is_primary_source: true, sourceId: "source-1", status: "FINISHED" },
+				],
 				research_objectives: [
 					{
 						description: "Description 1",
