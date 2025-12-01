@@ -135,6 +135,13 @@ lint.per-file-ignores."e2e/**/*.*" = [
   "S",
 ]
 lint.per-file-ignores."packages/db/alembic/**/*.*" = [ "INP001" ]
+# Lint overrides for packages/shared-testing - test infrastructure code
+lint.per-file-ignores."packages/shared-testing/**/*.*" = [
+  "ARG001", # Unused function arguments (pytest fixtures with side effects)
+  "S101",   # Use of assert (normal in test utilities)
+  "S311",   # Use of random.choice() (non-cryptographic test data generation)
+  "S608",   # SQL injection warnings (false positives for controlled test DB operations)
+]
 lint.per-file-ignores."scripts/**/*.*" = [
   "ARG001",
   "BLE001",
@@ -147,13 +154,6 @@ lint.per-file-ignores."scripts/**/*.*" = [
 lint.per-file-ignores."services/rag/src/autofill/base_handler.py" = [
   "B027",
 ] # Allow empty method in base class
-# Lint overrides for packages/shared-testing - test infrastructure code
-lint.per-file-ignores."packages/shared-testing/**/*.*" = [
-  "ARG001",  # Unused function arguments (pytest fixtures with side effects)
-  "S101",    # Use of assert (normal in test utilities)
-  "S311",    # Use of random.choice() (non-cryptographic test data generation)
-  "S608",    # SQL injection warnings (false positives for controlled test DB operations)
-]
 # Temporary overrides for OLD testing/ directory (will be removed in Phase 6)
 lint.per-file-ignores."testing/**/*.*" = [
   "ARG001",

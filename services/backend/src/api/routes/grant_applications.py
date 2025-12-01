@@ -131,6 +131,7 @@ class SourceResponse(TypedDict):
     filename: NotRequired[str]
     url: NotRequired[str]
     status: SourceIndexingStatusEnum
+    is_primary_source: bool
 
 
 class GrantTemplateResponse(TypedDict):
@@ -198,6 +199,7 @@ def _build_source_response(rag_source: RagSource) -> SourceResponse:
     source_response: SourceResponse = {
         "sourceId": str(rag_source.id),
         "status": rag_source.indexing_status,
+        "is_primary_source": rag_source.is_primary_source,
     }
 
     if isinstance(rag_source, RagUrl):

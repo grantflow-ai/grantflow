@@ -6,6 +6,7 @@ import { AppButton } from "@/components/app/buttons/app-button";
 import AppTextArea from "@/components/app/fields/textarea-field";
 import { cn } from "@/lib/utils";
 import type { API } from "@/types/api-types";
+import { drop } from "@/utils/helpers";
 import { FloatingActionPanel } from "./floating-action-panel";
 
 export type ObjectiveFormData = {
@@ -110,9 +111,7 @@ export function ObjectiveForm({ className, initialData, objectiveNumber, onSaveA
 				delete newTasks[taskId];
 
 				if (Object.keys(newTasks).length === 0) {
-					// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit tasks
-					const { tasks, ...remainingErrors } = prev;
-					return remainingErrors;
+					return drop(prev, "tasks");
 				}
 
 				return {

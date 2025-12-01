@@ -16,6 +16,7 @@ import type { API } from "@/types/api-types";
 import type { FileWithId } from "@/types/files";
 import { extractObjectPathFromUrl, triggerDevIndexing } from "@/utils/dev-indexing-patch";
 import { getEnv } from "@/utils/env";
+import { drop } from "@/utils/helpers";
 
 import { useApplicationStore } from "./application-store";
 
@@ -434,8 +435,7 @@ describe("Application Store", () => {
 				project_id: "test-project-id-2",
 				title: "Test Application 2",
 			});
-			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit grant_template
-			const { grant_template, ...application } = baseApplication;
+			const application = drop(baseApplication, "grant_template");
 
 			vi.mocked(updateGrantTemplate).mockClear();
 
@@ -466,8 +466,7 @@ describe("Application Store", () => {
 	describe.sequential("updateGrantType", () => {
 		it("should return early when grant template ID is missing", async () => {
 			const baseApplication = ApplicationFactory.build();
-			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit grant_template
-			const { grant_template, ...applicationWithoutTemplate } = baseApplication;
+			const applicationWithoutTemplate = drop(baseApplication, "grant_template");
 
 			useApplicationStore.setState({
 				application: applicationWithoutTemplate as API.RetrieveApplication.Http200.ResponseBody,
@@ -767,6 +766,7 @@ describe("Application Store", () => {
 		it("should remove URLs", async () => {
 			const ragSource = {
 				id: "source-1",
+				is_primary_source: true,
 				sourceId: "source-1",
 				status: "FINISHED",
 				url: "https://example.com",
@@ -800,6 +800,7 @@ describe("Application Store", () => {
 		it("should handle URL removal when URL not found in sources", async () => {
 			const ragSource = {
 				id: "source-1",
+				is_primary_source: true,
 				sourceId: "source-1",
 				status: "FINISHED",
 				url: "https://different.com",
@@ -1152,6 +1153,7 @@ describe("Application Store", () => {
 						rag_sources: [
 							{
 								filename: "existing.pdf",
+								is_primary_source: true,
 								sourceId: "source-1",
 								status: "FINISHED",
 							},
@@ -1180,6 +1182,7 @@ describe("Application Store", () => {
 					rag_sources: [
 						{
 							filename: "existing-app.pdf",
+							is_primary_source: true,
 							sourceId: "app-source-1",
 							status: "FINISHED",
 						},
@@ -1213,6 +1216,7 @@ describe("Application Store", () => {
 						rag_sources: [
 							{
 								filename: "template-existing.pdf",
+								is_primary_source: true,
 								sourceId: "template-source-1",
 								status: "FINISHED",
 							},
@@ -1221,6 +1225,7 @@ describe("Application Store", () => {
 					rag_sources: [
 						{
 							filename: "app-existing.pdf",
+							is_primary_source: true,
 							sourceId: "app-source-1",
 							status: "FINISHED",
 						},
@@ -1252,6 +1257,7 @@ describe("Application Store", () => {
 						rag_sources: [
 							{
 								filename: "different-file.pdf",
+								is_primary_source: true,
 								sourceId: "source-1",
 								status: "FINISHED",
 							},
@@ -1260,6 +1266,7 @@ describe("Application Store", () => {
 					rag_sources: [
 						{
 							filename: "another-different-file.pdf",
+							is_primary_source: true,
 							sourceId: "app-source-1",
 							status: "FINISHED",
 						},

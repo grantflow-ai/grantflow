@@ -293,6 +293,7 @@ describe.sequential("UrlInput", () => {
 					rag_sources: [
 						{
 							filename: null,
+							is_primary_source: true,
 							parentId: defaultParentId,
 							sourceId: "existing-source-id",
 							status: "FINISHED",
@@ -325,6 +326,7 @@ describe.sequential("UrlInput", () => {
 						rag_sources: [
 							{
 								filename: null,
+								is_primary_source: true,
 								parentId: templateId,
 								sourceId: "existing-source-id",
 								status: "FINISHED",
@@ -360,6 +362,7 @@ describe.sequential("UrlInput", () => {
 					rag_sources: [
 						{
 							filename: null,
+							is_primary_source: true,
 							parentId: defaultParentId,
 							sourceId: "source-1",
 							status: "FINISHED",
@@ -367,6 +370,7 @@ describe.sequential("UrlInput", () => {
 						},
 						{
 							filename: null,
+							is_primary_source: true,
 							parentId: defaultParentId,
 							sourceId: "source-2",
 							status: "FINISHED",
@@ -416,6 +420,7 @@ describe.sequential("UrlInput", () => {
 					rag_sources: [
 						{
 							filename: null,
+							is_primary_source: true,
 							parentId: defaultParentId,
 							sourceId: "existing-source-id",
 							status: "FINISHED",
@@ -750,7 +755,7 @@ describe.sequential("UrlInput", () => {
 					grant_template: {
 						...existingApp.grant_template!,
 						id: "template-123",
-						rag_sources: [{ sourceId: "1", status: "FINISHED", url: existingUrl }],
+						rag_sources: [{ is_primary_source: true, sourceId: "1", status: "FINISHED", url: existingUrl }],
 					},
 				},
 			});

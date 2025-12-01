@@ -201,8 +201,8 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 					grant_template: GrantTemplateFactory.build({
 						grant_sections: [],
 						rag_sources: [
-							{ filename: "test1.pdf", sourceId: "1", status: "INDEXING" },
-							{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" },
+							{ filename: "test1.pdf", is_primary_source: true, sourceId: "1", status: "INDEXING" },
+							{ filename: "test2.pdf", is_primary_source: true, sourceId: "2", status: "FINISHED" },
 						],
 					}),
 					title: "This is a valid title that meets minimum requirements",
@@ -228,8 +228,8 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 					grant_template: GrantTemplateFactory.build({
 						grant_sections: [],
 						rag_sources: [
-							{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" },
-							{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" },
+							{ filename: "test1.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+							{ filename: "test2.pdf", is_primary_source: true, sourceId: "2", status: "FINISHED" },
 						],
 					}),
 					title: "This is a valid title that meets minimum requirements",
@@ -255,8 +255,8 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 					grant_template: GrantTemplateFactory.build({
 						grant_sections: [],
 						rag_sources: [
-							{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" },
-							{ filename: "test2.pdf", sourceId: "2", status: "FAILED" },
+							{ filename: "test1.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+							{ filename: "test2.pdf", is_primary_source: true, sourceId: "2", status: "FAILED" },
 						],
 					}),
 					title: "This is a valid title that meets minimum requirements",
@@ -282,8 +282,8 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 					grant_template: GrantTemplateFactory.build({
 						grant_sections: [],
 						rag_sources: [
-							{ filename: "test1.pdf", sourceId: "1", status: "CREATED" },
-							{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" },
+							{ filename: "test1.pdf", is_primary_source: true, sourceId: "1", status: "CREATED" },
+							{ filename: "test2.pdf", is_primary_source: true, sourceId: "2", status: "FINISHED" },
 						],
 					}),
 					title: "This is a valid title that meets minimum requirements",
@@ -360,8 +360,8 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 							}),
 						],
 						rag_sources: [
-							{ filename: "test1.pdf", sourceId: "1", status: "INDEXING" },
-							{ filename: "test2.pdf", sourceId: "2", status: "CREATED" },
+							{ filename: "test1.pdf", is_primary_source: true, sourceId: "1", status: "INDEXING" },
+							{ filename: "test2.pdf", is_primary_source: true, sourceId: "2", status: "CREATED" },
 						],
 					}),
 					title: "This is a valid title that meets minimum requirements",
@@ -426,9 +426,9 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						grant_type: "RESEARCH",
 						id: "test-template-id",
 						rag_sources: [
-							{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" },
-							{ filename: "test2.pdf", sourceId: "2", status: "INDEXING" },
-							{ filename: "test3.pdf", sourceId: "3", status: "CREATED" },
+							{ filename: "test1.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+							{ filename: "test2.pdf", is_primary_source: true, sourceId: "2", status: "INDEXING" },
+							{ filename: "test3.pdf", is_primary_source: true, sourceId: "3", status: "CREATED" },
 						],
 						updated_at: new Date().toISOString(),
 					},
@@ -465,7 +465,9 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						grant_sections: [],
 						grant_type: "RESEARCH",
 						id: "test-template-id",
-						rag_sources: [{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" }],
+						rag_sources: [
+							{ filename: "test1.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+						],
 						updated_at: new Date().toISOString(),
 					},
 					title: "Short",
@@ -501,7 +503,9 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 						grant_sections: [],
 						grant_type: "RESEARCH",
 						id: "test-template-id",
-						rag_sources: [{ filename: "test1.pdf", sourceId: "1", status: "FINISHED" }],
+						rag_sources: [
+							{ filename: "test1.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+						],
 						updated_at: new Date().toISOString(),
 					},
 					title: "This is a valid title that meets minimum requirements",
@@ -572,6 +576,7 @@ describe.sequential("WizardFooter - Grant Application Wizard Navigation Controls
 					rag_sources: [
 						{
 							filename: "test-file.pdf",
+							is_primary_source: true,
 							sourceId: "test-source-id",
 							status: "FINISHED",
 						},
@@ -1001,7 +1006,7 @@ describe("WizardFooter - Analytics Tracking", () => {
 					}),
 				],
 				id: "template-123",
-				rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+				rag_sources: [{ filename: "test.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" }],
 			}),
 			id: "app-123",
 			project_id: "proj-123",
@@ -1210,7 +1215,9 @@ describe("WizardFooter - Analytics Tracking", () => {
 					...useApplicationStore.getState().application!,
 					grant_template: {
 						...useApplicationStore.getState().application!.grant_template!,
-						rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+						rag_sources: [
+							{ filename: "test.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+						],
 					},
 					title: "Valid Long Title for Testing",
 				},
@@ -1247,7 +1254,9 @@ describe("WizardFooter - Analytics Tracking", () => {
 					...useApplicationStore.getState().application!,
 					grant_template: {
 						...useApplicationStore.getState().application!.grant_template!,
-						rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+						rag_sources: [
+							{ filename: "test.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+						],
 					},
 					title: "Valid Long Title for Testing",
 				},
@@ -1286,7 +1295,9 @@ describe("WizardFooter - Analytics Tracking", () => {
 					...useApplicationStore.getState().application!,
 					grant_template: {
 						...useApplicationStore.getState().application!.grant_template!,
-						rag_sources: [{ filename: "test.pdf", sourceId: "1", status: "FINISHED" }],
+						rag_sources: [
+							{ filename: "test.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+						],
 					},
 					title: "Valid Long Title for Testing",
 				},
@@ -1392,8 +1403,8 @@ describe("WizardFooter - Analytics Tracking", () => {
 				application: {
 					...useApplicationStore.getState().application!,
 					rag_sources: [
-						{ filename: "test1.pdf", sourceId: "1", status: "FAILED" },
-						{ filename: "test2.pdf", sourceId: "2", status: "FAILED" },
+						{ filename: "test1.pdf", is_primary_source: true, sourceId: "1", status: "FAILED" },
+						{ filename: "test2.pdf", is_primary_source: true, sourceId: "2", status: "FAILED" },
 					],
 				},
 			});
@@ -1419,8 +1430,8 @@ describe("WizardFooter - Analytics Tracking", () => {
 				application: {
 					...useApplicationStore.getState().application!,
 					rag_sources: [
-						{ filename: "test1.pdf", sourceId: "1", status: "FAILED" },
-						{ filename: "test2.pdf", sourceId: "2", status: "FINISHED" },
+						{ filename: "test1.pdf", is_primary_source: true, sourceId: "1", status: "FAILED" },
+						{ filename: "test2.pdf", is_primary_source: true, sourceId: "2", status: "FINISHED" },
 					],
 				},
 			});

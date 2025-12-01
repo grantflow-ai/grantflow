@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { drop } from "@/utils/helpers";
 import { DraggableTaskList } from "./draggable-task-list";
 
 vi.mock("@dnd-kit/core", () => ({
@@ -227,8 +228,7 @@ describe("DraggableTaskList", () => {
 		it("handles missing callback functions gracefully", async () => {
 			const user = userEvent.setup();
 
-			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit callback functions
-			const { onTaskAdd, onTaskDelete, onTaskValueChange, ...propsWithoutCallbacks } = defaultProps;
+			const propsWithoutCallbacks = drop(defaultProps, "onTaskAdd", "onTaskDelete", "onTaskValueChange");
 
 			render(<DraggableTaskList {...propsWithoutCallbacks} isEditing={true} />);
 

@@ -158,6 +158,7 @@ export const RagSourceFactory = new Factory<RagSource>((factory, _, kwargs) => {
 
 	return stripUndefined({
 		filename,
+		is_primary_source: kwargs?.is_primary_source ?? true,
 		sourceId: factory.string.uuid(),
 		status,
 		url,
@@ -360,6 +361,7 @@ export const RagSourceUrlFactory = new Factory<RagSourceUrl>((factory) => ({
 	description: factory.datatype.boolean() ? factory.lorem.paragraph() : null,
 	id: factory.string.uuid(),
 	indexing_status: factory.helpers.arrayElement(["CREATED", "FAILED", "FINISHED", "INDEXING"]),
+	is_primary_source: true,
 	title: factory.datatype.boolean() ? factory.lorem.sentence() : null,
 	url: factory.internet.url(),
 }));
@@ -369,6 +371,7 @@ export const RagSourceFileFactory = new Factory<RagSourceFile>((factory) => ({
 	filename: `${factory.lorem.word()}.${factory.helpers.arrayElement(["pdf", "docx", "txt", "rtf"])}`,
 	id: factory.string.uuid(),
 	indexing_status: factory.helpers.arrayElement(["CREATED", "FAILED", "FINISHED", "INDEXING"]),
+	is_primary_source: true,
 	mime_type: factory.helpers.arrayElement([
 		"application/pdf",
 		"application/vnd.openxmlformats-officedocument.wordprocessingml.document",

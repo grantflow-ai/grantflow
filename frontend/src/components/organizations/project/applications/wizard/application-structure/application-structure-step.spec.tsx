@@ -111,8 +111,8 @@ describe("ApplicationStructureStep", () => {
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
 					rag_sources: [
-						{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" },
-						{ filename: "file2.pdf", sourceId: "2", status: "FINISHED" },
+						{ filename: "file1.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+						{ filename: "file2.pdf", is_primary_source: true, sourceId: "2", status: "FINISHED" },
 					],
 				}),
 			});
@@ -133,8 +133,8 @@ describe("ApplicationStructureStep", () => {
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
 					rag_sources: [
-						{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" },
-						{ filename: "file2.pdf", sourceId: "2", status: "INDEXING" },
+						{ filename: "file1.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+						{ filename: "file2.pdf", is_primary_source: true, sourceId: "2", status: "INDEXING" },
 					],
 				}),
 			});
@@ -152,7 +152,9 @@ describe("ApplicationStructureStep", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
-					rag_sources: [{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" }],
+					rag_sources: [
+						{ filename: "file1.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+					],
 				}),
 			});
 
@@ -172,7 +174,9 @@ describe("ApplicationStructureStep", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
-					rag_sources: [{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" }],
+					rag_sources: [
+						{ filename: "file1.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+					],
 				}),
 			});
 
@@ -193,7 +197,9 @@ describe("ApplicationStructureStep", () => {
 			const application = ApplicationWithTemplateFactory.build({
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
-					rag_sources: [{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" }],
+					rag_sources: [
+						{ filename: "file1.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+					],
 				}),
 			});
 
@@ -215,8 +221,8 @@ describe("ApplicationStructureStep", () => {
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
 					rag_sources: [
-						{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" },
-						{ filename: "file2.pdf", sourceId: "2", status: "CREATED" },
+						{ filename: "file1.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+						{ filename: "file2.pdf", is_primary_source: true, sourceId: "2", status: "CREATED" },
 					],
 				}),
 			});
@@ -254,8 +260,8 @@ describe("ApplicationStructureStep", () => {
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
 					rag_sources: [
-						{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" },
-						{ filename: "file2.pdf", sourceId: "2", status: "FAILED" },
+						{ filename: "file1.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+						{ filename: "file2.pdf", is_primary_source: true, sourceId: "2", status: "FAILED" },
 					],
 				}),
 			});
@@ -282,8 +288,8 @@ describe("ApplicationStructureStep", () => {
 						}),
 					],
 					rag_sources: [
-						{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" },
-						{ filename: "file2.pdf", sourceId: "2", status: "FAILED" },
+						{ filename: "file1.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+						{ filename: "file2.pdf", is_primary_source: true, sourceId: "2", status: "FAILED" },
 					],
 				}),
 			});
@@ -303,8 +309,8 @@ describe("ApplicationStructureStep", () => {
 				grant_template: GrantTemplateFactory.build({
 					grant_sections: [],
 					rag_sources: [
-						{ filename: "file1.pdf", sourceId: "1", status: "FINISHED" },
-						{ sourceId: "2", status: "FINISHED", url: "https://example.com" },
+						{ filename: "file1.pdf", is_primary_source: true, sourceId: "1", status: "FINISHED" },
+						{ is_primary_source: true, sourceId: "2", status: "FINISHED", url: "https://example.com" },
 					],
 				}),
 			});

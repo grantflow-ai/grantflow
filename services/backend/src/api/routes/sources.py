@@ -58,6 +58,7 @@ class RagFileResponse(TypedDict):
     mime_type: str
     created_at: str
     indexing_status: SourceIndexingStatusEnum
+    is_primary_source: bool
 
 
 class RagUrlResponse(TypedDict):
@@ -67,6 +68,7 @@ class RagUrlResponse(TypedDict):
     description: str | None
     created_at: str
     indexing_status: SourceIndexingStatusEnum
+    is_primary_source: bool
 
 
 class UploadUrlResponse(TypedDict):
@@ -381,6 +383,7 @@ async def handle_retrieve_rag_sources(
                         mime_type=result.mime_type,
                         indexing_status=result.indexing_status,
                         created_at=result.created_at.isoformat(),
+                        is_primary_source=result.is_primary_source,
                     )
                 )
             elif isinstance(result, RagUrl):
@@ -392,6 +395,7 @@ async def handle_retrieve_rag_sources(
                         description=result.description,
                         indexing_status=result.indexing_status,
                         created_at=result.created_at.isoformat(),
+                        is_primary_source=result.is_primary_source,
                     )
                 )
 

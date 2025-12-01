@@ -3,6 +3,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { drop } from "@/utils/helpers";
 import { DraggableTaskItem } from "./draggable-task-item";
 
 vi.mock("@dnd-kit/sortable", async () => {
@@ -367,8 +368,7 @@ describe("DraggableTaskItem", () => {
 		it("handles missing onValueChange gracefully", async () => {
 			const user = userEvent.setup();
 
-			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit onValueChange
-			const { onValueChange, ...propsWithoutOnValueChange } = defaultProps;
+			const propsWithoutOnValueChange = drop(defaultProps, "onValueChange");
 
 			render(
 				<TestWrapper>
@@ -384,8 +384,7 @@ describe("DraggableTaskItem", () => {
 		it("handles missing onTaskDelete gracefully", async () => {
 			const user = userEvent.setup();
 
-			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit onTaskDelete
-			const { onTaskDelete, ...propsWithoutOnTaskDelete } = defaultProps;
+			const propsWithoutOnTaskDelete = drop(defaultProps, "onTaskDelete");
 
 			render(
 				<TestWrapper>

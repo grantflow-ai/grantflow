@@ -77,8 +77,7 @@ describe.sequential("GrantCard", () => {
 
 	it("does not display description when not present", () => {
 		const baseGrant = GrantFactory.build();
-		// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit description
-		const { description, ...grant } = baseGrant;
+		const grant = drop(baseGrant, "description");
 		render(<GrantCard grant={grant as typeof baseGrant} />);
 
 		expect(screen.queryByTestId("grant-description")).not.toBeInTheDocument();
@@ -96,8 +95,7 @@ describe.sequential("GrantCard", () => {
 
 	it("does not display eligibility info when not present", () => {
 		const baseGrant = GrantFactory.build();
-		// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit eligibility
-		const { eligibility, ...grant } = baseGrant;
+		const grant = drop(baseGrant, "eligibility");
 		render(<GrantCard grant={grant as typeof baseGrant} />);
 
 		expect(screen.queryByTestId("grant-eligibility")).not.toBeInTheDocument();
@@ -120,8 +118,7 @@ describe.sequential("GrantCard", () => {
 
 	it("does not display View Details link when URL is not present", () => {
 		const baseGrant = GrantFactory.build();
-		// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit url
-		const { url, ...grant } = baseGrant;
+		const grant = drop(baseGrant, "url");
 		render(<GrantCard grant={grant as typeof baseGrant} />);
 
 		expect(screen.queryByTestId("grant-view-details-link")).not.toBeInTheDocument();
@@ -139,8 +136,7 @@ describe.sequential("GrantCard", () => {
 
 		it("displays 'Ongoing' when deadline is not provided", () => {
 			const baseGrant = GrantFactory.build();
-			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit deadline
-			const { deadline, ...grant } = baseGrant;
+			const grant = drop(baseGrant, "deadline");
 			render(<GrantCard grant={grant as typeof baseGrant} />);
 
 			expect(screen.getByTestId("grant-deadline")).toHaveTextContent("Ongoing");
@@ -244,8 +240,7 @@ describe.sequential("GrantCard", () => {
 
 		it("displays minimum amount with plus when only min is provided", () => {
 			const baseGrant = GrantFactory.build({ amount_min: 250_000 });
-			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit amount_max
-			const { amount_max, ...grant } = baseGrant;
+			const grant = drop(baseGrant, "amount_max");
 			render(<GrantCard grant={grant as typeof baseGrant} />);
 
 			expect(screen.getByTestId("grant-funding")).toHaveTextContent("$250,000+");
@@ -253,8 +248,7 @@ describe.sequential("GrantCard", () => {
 
 		it("displays maximum amount with 'Up to' when only max is provided", () => {
 			const baseGrant = GrantFactory.build({ amount_max: 750_000 });
-			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit amount_min
-			const { amount_min, ...grant } = baseGrant;
+			const grant = drop(baseGrant, "amount_min");
 			render(<GrantCard grant={grant as typeof baseGrant} />);
 
 			expect(screen.getByTestId("grant-funding")).toHaveTextContent("Up to $750,000");
@@ -262,8 +256,7 @@ describe.sequential("GrantCard", () => {
 
 		it("displays 'Amount varies' when neither min nor max are provided", () => {
 			const baseGrant = GrantFactory.build();
-			// biome-ignore lint/correctness/noUnusedVariables: Intentionally destructuring to omit amount_min and amount_max
-			const { amount_max, amount_min, ...grant } = baseGrant;
+			const grant = drop(baseGrant, "amount_max", "amount_min");
 			render(<GrantCard grant={grant as typeof baseGrant} />);
 
 			expect(screen.getByTestId("grant-funding")).toHaveTextContent("Amount varies");
@@ -378,3 +371,4 @@ describe.sequential("GrantCard", () => {
 		});
 	});
 });
+import { drop } from "@/utils/helpers";
