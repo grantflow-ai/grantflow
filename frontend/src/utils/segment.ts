@@ -43,6 +43,7 @@ export async function analyticsIdentify(
 	traits: {
 		email: string;
 		firstName: string;
+		isWaitlistUser?: boolean;
 		lastName: string;
 	},
 ) {

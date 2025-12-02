@@ -67,6 +67,7 @@ describe.sequential("WaitlistForm", () => {
 			expect(mockAnalyticsIdentify).toHaveBeenCalledWith("john.doe@example.com", {
 				email: "john.doe@example.com",
 				firstName: "John",
+				isWaitlistUser: true,
 				lastName: "Doe",
 			});
 		});
@@ -94,6 +95,7 @@ describe.sequential("WaitlistForm", () => {
 			expect(mockAnalyticsIdentify).toHaveBeenCalledWith("test@example.com", {
 				email: "test@example.com",
 				firstName: "John",
+				isWaitlistUser: true,
 				lastName: "Doe",
 			});
 		});
