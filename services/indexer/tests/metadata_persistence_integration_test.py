@@ -55,7 +55,7 @@ async def test_metadata_with_entities_persisted_to_database(
             )
         )
 
-    _vectors, text_content, metadata = await process_source(
+    _vectors, text_content, metadata, _scientific_analysis = await process_source(
         content=test_content,
         source_id=str(source_id),
         filename="test_document.txt",
@@ -148,7 +148,7 @@ async def test_metadata_gracefully_handles_no_entities(
             )
         )
 
-    _vectors, text_content, metadata = await process_source(
+    _vectors, text_content, metadata, _scientific_analysis = await process_source(
         content=test_content,
         source_id=str(source_id),
         filename="minimal.txt",

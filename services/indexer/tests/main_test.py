@@ -42,12 +42,14 @@ def mock_process_source() -> Generator[AsyncMock]:
     with patch("services.indexer.src.main.process_source") as mock:
         embedding = [0.1] * 384
 
-        def side_effect(**kwargs: Any) -> tuple[list[dict[str, Any]], str, dict[str, Any] | None]:
+        def side_effect(
+            **kwargs: Any,
+        ) -> tuple[list[dict[str, Any]], str, dict[str, Any] | None, dict[str, Any] | None]:
             source_id = kwargs.get("source_id", str(UUID("00000000-0000-0000-0000-000000000000")))
             vectors = [
                 {"chunk": {"content": "test", "metadata": {}}, "embedding": embedding, "rag_source_id": source_id}
             ]
-            return vectors, "Test extracted content", None
+            return vectors, "Test extracted content", None, None
 
         mock.side_effect = side_effect
         yield mock
@@ -757,7 +759,9 @@ async def test_handle_file_indexing_marks_failed_source_as_indexing_before_proce
         "blob_name": "retry.pdf",
     }
 
-    async def assert_indexing_status(**kwargs: Any) -> tuple[list[dict[str, Any]], str, dict[str, Any] | None]:
+    async def assert_indexing_status(
+        **kwargs: Any,
+    ) -> tuple[list[dict[str, Any]], str, dict[str, Any] | None, dict[str, Any] | None]:
         async with async_session_maker() as session:
             source = await session.scalar(select(RagSource).where(RagSource.id == source_id))
             assert source is not None
@@ -769,7 +773,7 @@ async def test_handle_file_indexing_marks_failed_source_as_indexing_before_proce
         vectors = [
             {"chunk": {"content": "retry", "metadata": {}}, "embedding": embedding, "rag_source_id": str(source_id)}
         ]
-        return vectors, "Recovered content", None
+        return vectors, "Recovered content", None, None
 
     mock_process_source.side_effect = assert_indexing_status
 
