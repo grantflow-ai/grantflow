@@ -39,6 +39,7 @@ export function WaitlistForm() {
 			await analyticsIdentify(values.email, {
 				email: values.email,
 				firstName: values.name.split(" ")[0] ?? "",
+				isWaitlistUser: true,
 				lastName: values.name.split(" ").at(-1) ?? "",
 			});
 			const message = "Thank you! You've successfully joined the waitlist.";

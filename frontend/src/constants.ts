@@ -1,3 +1,4 @@
+/** biome-ignore-all assist/source/useSortedKeys: wizard steps must not be sorted to maintain order in UI */
 export const FIREBASE_LOCAL_STORAGE_KEY = "firebase-signin-email";
 export const SESSION_COOKIE = "grantflow_session";
 export const SELECTED_ORGANIZATION_COOKIE = "grantflow_selected_organization";
