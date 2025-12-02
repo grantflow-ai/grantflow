@@ -19,25 +19,14 @@ from packages.shared_utils.src.serialization import serialize
 logger = get_logger(__name__)
 
 
-async def process_source(
-    *,
+async def _extract_document_content(
     content: bytes,
-    source_id: str,
-    filename: str,
     mime_type: str,
-    model_name: str | None = None,
-    enable_token_reduction: bool = False,
-    language_hint: str = "en",
-    enable_scientific_analysis: bool = True,
-) -> tuple[list[VectorDTO], str, DocumentMetadata, ScientificAnalysisResult | None]:
-    logger.debug(
-        "Starting optimized scientific document processing",
-        filename=filename,
-        mime_type=mime_type,
-        content_size=len(content),
-        enable_token_reduction=enable_token_reduction,
-    )
-
+    filename: str,
+    enable_token_reduction: bool,
+    language_hint: str,
+) -> tuple[list[Chunk], str, DocumentMetadata, float]:
+    """Extract text content, create chunks, and enrich metadata."""
     extraction_start = time.time()
 
     config = get_scientific_extraction_config(
@@ -52,7 +41,6 @@ async def process_source(
     result = await extract_bytes(content=content, mime_type=mime_type, config=config)
 
     extracted_text = result.content
-    processed_mime_type = result.mime_type
     chunks = result.chunks if hasattr(result, "chunks") and result.chunks else None
 
     metadata = cast(
@@ -76,28 +64,20 @@ async def process_source(
         else len(str(extracted_text))
     )
     logger.debug(
-        "Optimized text extraction completed with entity/keyword extraction",
+        "Text extraction completed",
         filename=filename,
         extraction_duration_ms=round(extraction_duration * 1000, 2),
         text_length=text_length,
-        original_mime_type=mime_type,
-        processed_mime_type=processed_mime_type,
         chunk_count=len(chunks) if chunks else 0,
-        metadata_fields=len(metadata) if metadata else 0,
         entities_extracted=entities_count,
         keywords_extracted=keywords_count,
-        token_reduction_enabled=enable_token_reduction,
     )
 
     if chunks:
         chunk_dtos = [Chunk(content=chunk) for chunk in chunks]
     else:
         chunk_dtos = [Chunk(content=extracted_text)]
-        logger.warning(
-            "Chunking not available, using full text as single chunk",
-            filename=filename,
-            text_length=text_length,
-        )
+        logger.warning("Chunking not available, using full text", filename=filename)
 
     text_content = (
         extracted_text
@@ -105,54 +85,92 @@ async def process_source(
         else serialize(extracted_text).decode()
     )
 
-    embedding_start = time.time()
+    return chunk_dtos, text_content, metadata, extraction_duration
 
-    async def _run_embedding() -> list[VectorDTO]:
+
+async def _run_parallel_processing(
+    chunks: list[Chunk],
+    text_content: str,
+    source_id: str,
+    filename: str,
+    model_name: str | None,
+    enable_scientific_analysis: bool,
+) -> tuple[list[VectorDTO], ScientificAnalysisResult | None, float]:
+    """Run embedding and scientific analysis in parallel."""
+    start_time = time.time()
+
+    async def _embed() -> list[VectorDTO]:
         if model_name is not None:
             return await index_chunks(
-                chunks=chunk_dtos, source_id=source_id, model_name=model_name
+                chunks=chunks, source_id=source_id, model_name=model_name
             )
-        return await index_chunks(chunks=chunk_dtos, source_id=source_id)
+        return await index_chunks(chunks=chunks, source_id=source_id)
 
-    async def _run_scientific_analysis() -> ScientificAnalysisResult | None:
+    async def _analyze() -> ScientificAnalysisResult | None:
         if not enable_scientific_analysis:
             return None
         try:
             return await analyze_scientific_content(text_content, source_id=source_id)
         except Exception:
             logger.exception(
-                "Scientific analysis failed, continuing without it",
-                source_id=source_id,
-                filename=filename,
+                "Scientific analysis failed", source_id=source_id, filename=filename
             )
             return None
 
-    vectors, scientific_analysis = await gather(
-        _run_embedding(),
-        _run_scientific_analysis(),
-    )
-
-    embedding_duration = time.time() - embedding_start
+    vectors, analysis = await gather(_embed(), _analyze())
+    duration = time.time() - start_time
 
     logger.debug(
-        "Embedding and scientific analysis completed",
+        "Parallel processing completed",
         source_id=source_id,
-        embedding_duration_ms=round(embedding_duration * 1000, 2),
+        duration_ms=round(duration * 1000, 2),
         vector_count=len(vectors),
-        has_scientific_analysis=scientific_analysis is not None,
+        has_analysis=analysis is not None,
     )
 
-    total_processing_time = extraction_duration + embedding_duration
+    return vectors, analysis, duration
+
+
+async def process_source(
+    *,
+    content: bytes,
+    source_id: str,
+    filename: str,
+    mime_type: str,
+    model_name: str | None = None,
+    enable_token_reduction: bool = False,
+    language_hint: str = "en",
+    enable_scientific_analysis: bool = True,
+) -> tuple[list[VectorDTO], str, DocumentMetadata, ScientificAnalysisResult | None]:
+    """Process a source document: extract content, generate embeddings, run scientific analysis."""
+    logger.debug(
+        "Starting source processing", filename=filename, content_size=len(content)
+    )
+
+    chunks, text_content, metadata, extraction_time = await _extract_document_content(
+        content=content,
+        mime_type=mime_type,
+        filename=filename,
+        enable_token_reduction=enable_token_reduction,
+        language_hint=language_hint,
+    )
+
+    vectors, analysis, processing_time = await _run_parallel_processing(
+        chunks=chunks,
+        text_content=text_content,
+        source_id=source_id,
+        filename=filename,
+        model_name=model_name,
+        enable_scientific_analysis=enable_scientific_analysis,
+    )
+
     logger.info(
-        "Optimized source processing completed",
+        "Source processing completed",
         filename=filename,
         source_id=source_id,
-        total_processing_ms=round(total_processing_time * 1000, 2),
-        final_text_length=len(text_content),
-        final_vector_count=len(vectors),
-        token_reduction_savings="~35%" if enable_token_reduction else "0%",
-        scientific_analysis_enabled=enable_scientific_analysis,
-        scientific_analysis_success=scientific_analysis is not None,
+        total_ms=round((extraction_time + processing_time) * 1000, 2),
+        vectors=len(vectors),
+        has_analysis=analysis is not None,
     )
 
-    return vectors, text_content, metadata, scientific_analysis
+    return vectors, text_content, metadata, analysis

@@ -128,75 +128,42 @@ class CFPAnalysis(TypedDict):
     activity_code: NotRequired[str | None]
 
 
-class ArgumentElement(TypedDict):
+class BaseScientificElement(TypedDict):
     id: int
     text: str
+    source: str
+    temporal_context: str
+    temporal_order: float
+    action_type: str
+    pivot: bool
+    rhetorical_action: str
+    hierarchy: str
+
+
+class ArgumentElement(BaseScientificElement):
     context: str
     type: str
-    source: str
-    temporal_context: str
-    temporal_order: float
-    action_type: str
-    pivot: bool
-    rhetorical_action: str
-    hierarchy: str
 
 
-class EvidenceElement(TypedDict):
-    id: int
-    text: str
+class EvidenceElement(BaseScientificElement):
     type: str
     supports: str
-    source: str
-    temporal_context: str
-    temporal_order: float
-    action_type: str
-    pivot: bool
-    rhetorical_action: str
-    hierarchy: str
 
 
-class HypothesisElement(TypedDict):
-    id: int
-    text: str
+class HypothesisElement(BaseScientificElement):
     type: str
     testable: str
-    source: str
-    temporal_context: str
-    temporal_order: float
-    action_type: str
-    pivot: bool
-    rhetorical_action: str
-    hierarchy: str
 
 
-class ConclusionElement(TypedDict):
-    id: int
-    text: str
+class ConclusionElement(BaseScientificElement):
     type: str
     based_on: str
-    source: str
-    temporal_context: str
-    temporal_order: float
-    action_type: str
-    pivot: bool
-    rhetorical_action: str
-    hierarchy: str
 
 
-class ExperimentResultElement(TypedDict):
-    id: int
-    text: str
+class ExperimentResultElement(BaseScientificElement):
     experiment: str
     outcome: str
     significance: NotRequired[str]
-    source: str
-    temporal_context: str
-    temporal_order: float
-    action_type: str
-    pivot: bool
-    rhetorical_action: str
-    hierarchy: str
 
 
 class SourceElement(TypedDict):

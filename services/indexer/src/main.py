@@ -342,7 +342,6 @@ async def handle_file_indexing(  # noqa: PLR0912
 
                 if scientific_analysis is not None:
                     update_values["scientific_analysis_json"] = scientific_analysis
-                    update_values["scientific_analysis_updated_at"] = datetime.now(UTC)
 
                 await session.execute(
                     update(RagSource).where(RagSource.id == parse_result["source_id"]).values(update_values)

@@ -23,12 +23,7 @@ def upgrade() -> None:
         "rag_sources",
         sa.Column("scientific_analysis_json", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     )
-    op.add_column(
-        "rag_sources",
-        sa.Column("scientific_analysis_updated_at", sa.DateTime(timezone=True), nullable=True),
-    )
 
 
 def downgrade() -> None:
-    op.drop_column("rag_sources", "scientific_analysis_updated_at")
     op.drop_column("rag_sources", "scientific_analysis_json")
