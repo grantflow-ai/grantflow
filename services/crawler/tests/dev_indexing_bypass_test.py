@@ -1,6 +1,9 @@
 import os
 from unittest.mock import AsyncMock, patch
 
+import pytest
+from packages.shared_utils.src.exceptions import IndexingTriggerError
+
 from services.crawler.src.dev_indexing_bypass import (
     is_development_environment,
     trigger_dev_indexing,
@@ -80,10 +83,15 @@ class TestTriggerDevIndexing:
 
             with patch("httpx.AsyncClient", return_value=mock_client):
                 with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
-                    await trigger_dev_indexing("test/file.pdf", "trace-456")
+                    with pytest.raises(IndexingTriggerError) as exc_info:
+                        await trigger_dev_indexing("test/file.pdf", "trace-456")
 
                     assert mock_client.post.call_count == 3
                     assert mock_sleep.call_count == 2
+
+                    assert "Unable to connect to indexer service" in str(exc_info.value)
+                    assert exc_info.value.context["object_path"] == "test/file.pdf"
+                    assert exc_info.value.context["max_retries"] == 3
 
     async def test_success_on_second_attempt(self) -> None:
         with patch.dict(os.environ, {"ENVIRONMENT": "development"}):

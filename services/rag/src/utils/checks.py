@@ -74,12 +74,54 @@ async def verify_rag_sources_indexed(
             )
             raise DatabaseError("Error verifying rag sources indexed", context=str(e)) from e
 
-    # Filter out sources that haven't been uploaded yet
+    all_sources = list(rag_sources)
+
+    if all_sources:
+        failed_sources = [source for source in all_sources if source.indexing_status == SourceIndexingStatusEnum.FAILED]
+
+        non_pending_sources = [
+            source for source in all_sources if source.indexing_status != SourceIndexingStatusEnum.PENDING_UPLOAD
+        ]
+
+        if non_pending_sources and len(failed_sources) == len(non_pending_sources):
+            failed_details = []
+            for source in failed_sources:
+                detail = {
+                    "id": str(source.id),
+                    "error": source.error_message or "Unknown error",
+                    "source_type": source.source_type,
+                }
+                failed_details.append(detail)
+
+            logger.error(
+                "All sources have failed, aborting indexing wait",
+                parent_id=str(parent_id),
+                entity_type=entity_type.__name__,
+                failed_count=len(failed_sources),
+                total_count=len(non_pending_sources),
+                failed_sources_details=failed_details,
+                trace_id=trace_id,
+            )
+
+            entity_name = "grant_application" if entity_type == GrantApplication else "grant_template"
+
+            primary_error = failed_sources[0].error_message or "Indexer service unavailable"
+
+            raise ValidationError(
+                f"Source indexing failed: {primary_error}",
+                context={
+                    f"{entity_name}_id": str(parent_id),
+                    "failed_sources_count": len(failed_sources),
+                    "total_sources": len(non_pending_sources),
+                    "error_type": "indexing_failure",
+                    "failed_sources": failed_details,
+                },
+            )
+
     active_sources = [
         source for source in rag_sources if source.indexing_status != SourceIndexingStatusEnum.PENDING_UPLOAD
     ]
 
-    # Check if only PENDING_UPLOAD sources exist
     if not active_sources and rag_sources:
         logger.warning(
             "No uploaded sources found",

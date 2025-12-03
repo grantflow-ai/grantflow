@@ -179,8 +179,6 @@ async def handle_grant_template_pipeline(
                 cfp_analysis_result = cast("CFPAnalysisStageDTO", checkpoint_data)
                 cfp_analysis = cfp_analysis_result["cfp_analysis"]
 
-                # Reload grant_template from database to get latest predefined_template_id
-                # This handles cases where the template was updated between pipeline stages
                 async with session_maker() as session:
                     refreshed_template = await session.scalar(
                         select_active(GrantTemplate).where(GrantTemplate.id == grant_template.id)
@@ -270,11 +268,21 @@ async def handle_grant_template_pipeline(
         elif isinstance(e, LLMTimeoutError):
             user_message = "AI processing took longer than expected. The request will be retried automatically. Please wait a moment and check back."
             event_type = NotificationEvents.LLM_TIMEOUT
+        elif isinstance(e, ValidationError) and "unable to connect to indexer" in str(e).lower():
+            user_message = "Unable to start document indexing - indexer service is unavailable. Please try again later or contact support."
+            event_type = NotificationEvents.INDEXING_FAILED
         elif isinstance(e, ValidationError) and "indexing timeout" in str(e).lower():
             user_message = "Document indexing is taking longer than expected. Please wait a few minutes and try again."
             event_type = NotificationEvents.INDEXING_TIMEOUT
         elif isinstance(e, ValidationError) and "indexing failed" in str(e).lower():
-            user_message = "Document indexing failed. Please upload new documents and try again."
+            error_details = getattr(e, "context", {})
+            failed_sources = error_details.get("failed_sources", [])
+
+            if failed_sources and failed_sources[0].get("error"):
+                specific_error = failed_sources[0]["error"]
+                user_message = f"Document indexing failed: {specific_error}"
+            else:
+                user_message = "Document indexing failed. Please upload new documents and try again."
             event_type = NotificationEvents.INDEXING_FAILED
         else:
             user_message = "An unexpected error occurred while processing your grant template. Please try again or contact support if this persists."

@@ -72,3 +72,10 @@ class RagJobCancelledError(BackendError):
 
 class LLMTimeoutError(BackendError):
     category = ErrorCategory.RETRIABLE
+
+
+class IndexingTriggerError(BackendError):
+    """Raised when dev indexing cannot be triggered after all retry attempts"""
+
+    category = ErrorCategory.INFRASTRUCTURE
+    retriable = False
