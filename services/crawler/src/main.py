@@ -33,6 +33,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from services.crawler.src.extraction import crawl_url, FileContent
 from services.crawler.src.utils import filter_url
 from services.crawler.src.dev_indexing_bypass import trigger_dev_indexing
+from packages.shared_utils.src.exceptions import IndexingTriggerError
 from packages.db.src.tables import (
     RagFile,
     RagSource,
@@ -167,7 +168,29 @@ async def handle_gcs_file_upload(
                 trace_id=trace_id,
             )
 
-            await trigger_dev_indexing(object_path, trace_id)
+            try:
+                await trigger_dev_indexing(object_path, trace_id)
+            except IndexingTriggerError as e:
+                logger.error(
+                    "Dev indexing trigger failed, marking source as failed",
+                    source_id=str(file_source_id),
+                    error=str(e),
+                    trace_id=trace_id,
+                )
+
+                async with session_maker() as update_session, update_session.begin():
+                    await update_session.execute(
+                        update(RagSource)
+                        .where(RagSource.id == file_source_id)
+                        .values(
+                            indexing_status=SourceIndexingStatusEnum.FAILED,
+                            error_type="IndexingTriggerError",
+                            error_message=str(e),
+                        )
+                    )
+
+                raise
+
         except SQLAlchemyError as e:
             logger.error("Failed to create RagFile entry in DB", exc_info=e)
             raise DatabaseError(
