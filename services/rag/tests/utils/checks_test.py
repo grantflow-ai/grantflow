@@ -83,10 +83,6 @@ async def test_all_sources_finished_grant_template(
 
 
 # TODO: Convert this complex recursive test - requires mocking the state change
-
-# TODO: Convert this complex recursive test - requires mocking the state change
-
-
 async def test_all_sources_failed_grant_application(
     grant_application: GrantApplication,
     async_session_maker: async_sessionmaker[Any],
@@ -108,9 +104,9 @@ async def test_all_sources_failed_grant_application(
             trace_id,
         )
 
-    assert "all rag sources have failed to be indexed" in str(exc_info.value)
+    assert "Source indexing failed" in str(exc_info.value)
     assert exc_info.value.context["grant_application_id"] == str(grant_application.id)
-    assert exc_info.value.context["failed_sources"] == 2
+    assert exc_info.value.context["failed_sources_count"] == 2
     assert exc_info.value.context["total_sources"] == 2
     assert exc_info.value.context["error_type"] == "indexing_failure"
 
@@ -139,7 +135,8 @@ async def test_all_sources_failed_grant_template(
         )
 
     assert exc_info.value.context["grant_template_id"] == str(grant_template_with_sections.id)
-    assert exc_info.value.context["failed_sources"] == 3
+    assert exc_info.value.context["failed_sources_count"] == 3
+    assert exc_info.value.context["total_sources"] == 3
 
 
 # TODO: Convert this test to use real database
@@ -202,7 +199,6 @@ async def test_pending_upload_sources_are_filtered(
         await link_source_to_application(session, grant_application.id, source3.id)
         await session.commit()
 
-        # Should succeed because we have at least one FINISHED source (PENDING_UPLOAD are filtered)
         await verify_rag_sources_indexed(
             grant_application.id,
             async_session_maker,
@@ -262,9 +258,8 @@ async def test_pending_upload_with_failed_sources(
             trace_id,
         )
 
-    # Should fail because all active sources (non-PENDING_UPLOAD) are FAILED
-    assert "all rag sources have failed to be indexed" in str(exc_info.value)
-    assert exc_info.value.context["failed_sources"] == 2
+    assert "Source indexing failed" in str(exc_info.value)
+    assert exc_info.value.context["failed_sources_count"] == 2
     assert exc_info.value.context["total_sources"] == 2  # Only counts active sources
 
 
@@ -286,7 +281,6 @@ async def test_pending_upload_with_mixed_statuses_grant_template(
         await link_source_to_template(session, grant_template_with_sections.id, source4.id)
         await session.commit()
 
-        # Should succeed because we have at least one FINISHED source
         await verify_rag_sources_indexed(
             grant_template_with_sections.id,
             async_session_maker,
