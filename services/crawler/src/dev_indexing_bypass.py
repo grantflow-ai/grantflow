@@ -6,6 +6,7 @@ from datetime import datetime, UTC
 from uuid import uuid4
 
 import httpx
+from packages.shared_utils.src.exceptions import IndexingTriggerError
 from packages.shared_utils.src.logger import get_logger
 
 logger = get_logger(__name__)
@@ -112,4 +113,13 @@ async def trigger_dev_indexing(object_path: str, trace_id: str = "") -> None:
         object_path=object_path,
         trace_id=trace_id,
         max_retries=MAX_RETRIES,
+    )
+
+    raise IndexingTriggerError(
+        "Unable to connect to indexer service after 3 attempts",
+        context={
+            "object_path": object_path,
+            "max_retries": MAX_RETRIES,
+            "indexer_url": INDEXER_URL,
+        },
     )
