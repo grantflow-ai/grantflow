@@ -18,7 +18,7 @@ export default async function EditPredefinedTemplatePage({ params }: PageProps) 
 	const [template, institutions] = await Promise.all([getPredefinedTemplate(id), listGrantingInstitutions()]);
 
 	return (
-		<AdminGrantingInstitutionClient activeTab="predefined-templates">
+		<AdminGrantingInstitutionClient activeTab="templates">
 			<div className="space-y-6" data-testid="predefined-template-edit-page">
 				<div className="flex items-center justify-between">
 					<div>

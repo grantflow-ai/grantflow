@@ -73,7 +73,7 @@ export default async function PredefinedTemplateDetailPage({ params }: PageProps
 	const sectionCount = template.grant_sections.length;
 
 	return (
-		<AdminGrantingInstitutionClient activeTab="predefined-templates">
+		<AdminGrantingInstitutionClient activeTab="templates">
 			<div className="space-y-6" data-testid="predefined-template-detail-page">
 				<div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 					<div>
