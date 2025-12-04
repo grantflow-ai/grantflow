@@ -20,7 +20,6 @@ import {
 import { AppButton } from "@/components/app/buttons/app-button";
 import { AppInput } from "@/components/app/fields/app-input";
 import type { API } from "@/types/api-types";
-import { drop } from "@/utils/helpers";
 import { log } from "@/utils/logger/client";
 import { routes } from "@/utils/navigation";
 
@@ -35,26 +34,26 @@ export function GrantingInstitutionForm({
 }: GrantingInstitutionFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [fullName, setFullName] = useState(institution?.full_name ?? "");
+  const [institutionName, setInstitutionName] = useState(institution?.full_name ?? "");
   const [abbreviation, setAbbreviation] = useState(
     institution?.abbreviation ?? ""
   );
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [errors, setErrors] = useState<{
     abbreviation?: string;
-    fullName?: string;
+    institutionName?: string;
   }>({});
 
   const validateForm = (): boolean => {
-    const newErrors: { abbreviation?: string; fullName?: string } = {};
+    const newErrors: { abbreviation?: string; institutionName?: string } = {};
 
-    const trimmedFullName = fullName.trim();
-    if (!trimmedFullName) {
-      newErrors.fullName = "Full name is required";
-    } else if (trimmedFullName.length < 2) {
-      newErrors.fullName = "Full name must be at least 2 characters";
-    } else if (trimmedFullName.length > 200) {
-      newErrors.fullName = "Full name must not exceed 200 characters";
+    const trimmedName = institutionName.trim();
+    if (!trimmedName) {
+      newErrors.institutionName = "Institution name is required";
+    } else if (trimmedName.length < 2) {
+      newErrors.institutionName = "Institution name must be at least 2 characters";
+    } else if (trimmedName.length > 200) {
+      newErrors.institutionName = "Institution name must not exceed 200 characters";
     }
 
     const trimmedAbbreviation = abbreviation.trim();
@@ -77,13 +76,13 @@ export function GrantingInstitutionForm({
     setErrors({});
 
     try {
-      const trimmedFullName = fullName.trim();
+      const trimmedName = institutionName.trim();
       const trimmedAbbreviation = abbreviation.trim();
 
       if (mode === "create") {
         await createGrantingInstitution({
           abbreviation: trimmedAbbreviation || null,
-          full_name: trimmedFullName,
+          full_name: trimmedName,
         });
         toast.success("Granting institution created successfully");
       } else {
@@ -92,7 +91,7 @@ export function GrantingInstitutionForm({
         }
         await updateGrantingInstitution(institution.id, {
           abbreviation: trimmedAbbreviation || null,
-          full_name: trimmedFullName,
+          full_name: trimmedName,
         });
         toast.success("Granting institution updated successfully");
       }
@@ -131,30 +130,33 @@ export function GrantingInstitutionForm({
           Institution name
         </h3>
         <AppInput
-          aria-describedby={errors.fullName ? "full_name-error" : undefined}
-          aria-invalid={!!errors.fullName}
+          aria-describedby={errors.institutionName ? "institution_name-error" : undefined}
+          aria-invalid={!!errors.institutionName}
           className={`w-full h-10 px-3 border rounded-[4px] bg-white! text-sm font-sans text-app-gray-600 placeholder:text-app-gray-400 font-normal border-app-gray-600  focus:outline-none ${
-            errors.fullName
+            errors.institutionName
               ? "border-error focus:border-error"
               : "border-app-gray-600 focus:border-primary"
           } ${isLoading ? "opacity-60 cursor-not-allowed" : ""}`}
-          data-testid="full-name-input"
+          data-testid="institution-name-input"
           disabled={isLoading}
-          id="full_name"
+          id="institution_name"
           maxLength={200}
           onChange={(e) => {
-            setFullName(e.target.value);
-            if (errors.fullName) {
-              setErrors((prev) => ({ ...prev, fullName: undefined }));
+            setInstitutionName(e.target.value);
+            if (errors.institutionName) {
+              setErrors((prev) => {
+                const { institutionName, ...rest } = prev;
+                return rest;
+              });
             }
           }}
           placeholder="Enter full institution name"
           type="text"
-          value={fullName}
+          value={institutionName}
         />
-        {errors.fullName ? (
-          <p className="text-sm text-error" id="full_name-error">
-            {errors.fullName}
+        {errors.institutionName ? (
+          <p className="text-sm text-error" id="institution_name-error">
+            {errors.institutionName}
           </p>
         ) : null}
       </div>
@@ -180,7 +182,10 @@ export function GrantingInstitutionForm({
           onChange={(e) => {
             setAbbreviation(e.target.value);
             if (errors.abbreviation) {
-              setErrors((prev) => ({ ...prev, abbreviation: undefined }));
+              setErrors((prev) => {
+                const { abbreviation, ...rest } = prev;
+                return rest;
+              });
             }
           }}
           placeholder="Enter abbreviation (optional)"
