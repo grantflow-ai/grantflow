@@ -120,7 +120,7 @@ async def handle_pubsub_message(
 
 
 @post("/")
-async def handle_file_indexing(  # noqa: PLR0912
+async def handle_file_indexing(  # noqa: PLR0912 - many branches needed for indexing state machine (PENDING/FINISHED/INDEXING/FAILED)
     data: PubSubEvent,
     session_maker: async_sessionmaker[Any],
 ) -> None:
@@ -329,7 +329,7 @@ async def handle_file_indexing(  # noqa: PLR0912
                 indexing_status=SourceIndexingStatusEnum.FINISHED,
                 trace_id=trace_id,
                 document_metadata=document_metadata,
-                scientific_analysis_json=scientific_analysis,
+                scientific_analysis=scientific_analysis,
             )
         else:
             async with session_maker() as session, session.begin():
@@ -341,7 +341,7 @@ async def handle_file_indexing(  # noqa: PLR0912
                     update_values["document_metadata"] = dict(document_metadata)
 
                 if scientific_analysis is not None:
-                    update_values["scientific_analysis_json"] = scientific_analysis
+                    update_values["scientific_analysis"] = scientific_analysis
 
                 await session.execute(
                     update(RagSource).where(RagSource.id == parse_result["source_id"]).values(update_values)

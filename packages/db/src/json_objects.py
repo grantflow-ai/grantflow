@@ -132,37 +132,37 @@ class BaseScientificElement(TypedDict):
     id: int
     text: str
     source: str
-    temporal_context: str
-    temporal_order: float
-    action_type: str
-    pivot: bool
-    rhetorical_action: str
-    hierarchy: str
+    temporal_context: NotRequired[str]
+    temporal_order: NotRequired[float]
+    action_type: NotRequired[str]
+    pivot: NotRequired[bool]
+    rhetorical_action: NotRequired[str]
+    hierarchy: NotRequired[str]
 
 
 class ArgumentElement(BaseScientificElement):
-    context: str
+    context: NotRequired[str]
     type: str
 
 
 class EvidenceElement(BaseScientificElement):
     type: str
-    supports: str
+    supports: NotRequired[str]
 
 
 class HypothesisElement(BaseScientificElement):
     type: str
-    testable: str
+    testable: NotRequired[str]
 
 
 class ConclusionElement(BaseScientificElement):
     type: str
-    based_on: str
+    based_on: NotRequired[str]
 
 
 class ExperimentResultElement(BaseScientificElement):
     experiment: str
-    outcome: str
+    outcome: NotRequired[str]
     significance: NotRequired[str]
 
 
@@ -170,30 +170,28 @@ class SourceElement(TypedDict):
     id: int
     text: str
     type: str
-    relevance: str
+    relevance: NotRequired[str]
 
 
-class ObjectiveElement(TypedDict):
+class BasePlanElement(TypedDict):
     id: int
     text: str
-    scope: str
-    expected_outcome: str
+    temporal_context: NotRequired[str]
+    temporal_order: NotRequired[float]
+    hierarchy: NotRequired[str]
+
+
+class ObjectiveElement(BasePlanElement):
+    scope: NotRequired[str]
+    expected_outcome: NotRequired[str]
     type: str
-    temporal_context: str
-    temporal_order: float
-    hierarchy: str
 
 
-class TaskElement(TypedDict):
-    id: int
-    text: str
-    action: str
-    deliverable: str
+class TaskElement(BasePlanElement):
+    action: NotRequired[str]
+    deliverable: NotRequired[str]
     supports_objective: int
-    depends_on: list[int]
-    temporal_context: str
-    temporal_order: float
-    hierarchy: str
+    depends_on: NotRequired[list[int]]
 
 
 class AnalysisMetadata(TypedDict):

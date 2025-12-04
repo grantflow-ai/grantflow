@@ -150,7 +150,7 @@ Use the already written parts of the work plan to maintain continuity and cohere
 ${work_plan_text}
 </work_plan_text>
 
-${argument_structure_section}
+${scientific_analysis_section}
 """,
 )
 
@@ -248,21 +248,6 @@ def _format_relationships(component: ResearchComponentGenerationDTO) -> str:
     if not relationships:
         return "None"
     return "\n".join(f"- {component['number']} -> {target}: {description}" for target, description in relationships)
-
-
-def _format_argument_structure(argument_structure: ScientificAnalysisResult | None) -> str:
-    """Format scientific analysis data for LLM consumption.
-
-    Args:
-        argument_structure: Extracted scientific analysis containing arguments, evidence,
-            hypotheses, objectives, and tasks with metadata annotations.
-
-    Returns:
-        Formatted JSON string or empty string if no analysis is provided.
-    """
-    if argument_structure is None:
-        return ""
-    return serialize(argument_structure).decode()
 
 
 async def adjust_component_length(
@@ -411,7 +396,7 @@ async def generate_work_plan_component_text(
     form_inputs: ResearchDeepDive | TranslationalResearchDeepDive,
     work_plan_text: str,
     shared_rag_results: list[str] | None = None,
-    argument_structure: "ScientificAnalysisResult | None" = None,
+    scientific_analysis: "ScientificAnalysisResult | None" = None,
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
 ) -> str:
@@ -426,7 +411,7 @@ async def generate_work_plan_component_text(
 
     min_words, max_words = _component_word_bounds(component)
 
-    argument_structure_section = _format_argument_structure(argument_structure)
+    scientific_analysis_section = "" if scientific_analysis is None else serialize(scientific_analysis).decode()
 
     prompt = GENERATE_WORK_COMPONENT_USER_PROMPT.to_string(
         description=component.get("description", "none given"),
@@ -441,7 +426,7 @@ async def generate_work_plan_component_text(
         object_type_specific_guidance=object_type_specific_guidance,
         relationship_guidance=relationship_guidance,
         object_title=component["title"],
-        argument_structure_section=argument_structure_section,
+        scientific_analysis_section=scientific_analysis_section,
     )
 
     rag_results = []
@@ -550,7 +535,7 @@ async def generate_workplan_section(
     components: list[ResearchComponentGenerationDTO],
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
-    argument_structure: "ScientificAnalysisResult | None" = None,
+    scientific_analysis: "ScientificAnalysisResult | None" = None,
     batch_size: int = DEFAULT_BATCH_SIZE,
     retrieve_shared_context: bool = True,
 ) -> str:
@@ -594,7 +579,7 @@ async def generate_workplan_section(
             work_plan_text="",
             form_inputs=form_inputs,
             shared_rag_results=shared_rag_results if retrieve_shared_context else None,
-            argument_structure=argument_structure,
+            scientific_analysis=scientific_analysis,
             trace_id=trace_id,
             job_manager=job_manager,
         )

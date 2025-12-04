@@ -260,7 +260,7 @@ class RagSource(BaseWithUUIDPK):
     }
 
     source_type: Mapped[Literal["rag_file", "rag_url"]] = mapped_column(String(50))
-    scientific_analysis_json: Mapped["ScientificAnalysisResult | None"] = mapped_column(JSONB, nullable=True)
+    scientific_analysis: Mapped["ScientificAnalysisResult | None"] = mapped_column(JSONB, nullable=True)
 
 
 class RagFile(RagSource):

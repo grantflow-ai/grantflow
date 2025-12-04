@@ -43,11 +43,6 @@ from services.rag.src.grant_application.utils import (
 from services.rag.src.utils.checks import verify_rag_sources_indexed
 from services.rag.src.utils.editorial import perform_editorial_workflow
 from services.rag.src.utils.job_manager import JobManager
-from services.rag.src.utils.red_team_output import (
-    save_application_output,
-    save_editorial_workflow_output,
-    save_sections_breakdown,
-)
 from services.rag.src.utils.retrieval import retrieve_documents
 
 logger = get_logger(__name__)
@@ -398,8 +393,6 @@ async def _apply_editorial_workflow(
         )
         knowledge_base = "\n\n".join(knowledge_base_docs)
 
-        original_application_text = application_text
-
         application_text, workflow_metadata = await perform_editorial_workflow(
             application_text=application_text,
             cfp_text=cfp_text,
@@ -419,17 +412,6 @@ async def _apply_editorial_workflow(
             trace_id=trace_id,
         )
 
-        save_editorial_workflow_output(
-            application_id=str(application_id),
-            application_title=grant_application.title,
-            original_text=original_application_text,
-            review_letter=workflow_metadata["review"],
-            approved_edits=workflow_metadata["edits"],
-            final_text=application_text,
-            timing=workflow_metadata["timing"],
-            statistics=workflow_metadata["stats"],
-        )
-
     except Exception as e:
         logger.error(
             "Editorial workflow failed (non-fatal)",
@@ -442,7 +424,7 @@ async def _apply_editorial_workflow(
     return application_text
 
 
-async def handle_grant_application_pipeline(  # noqa: PLR0912, PLR0915
+async def handle_grant_application_pipeline(  # noqa: PLR0912
     grant_application: GrantApplication,
     session_maker: async_sessionmaker[Any],
     trace_id: str,
@@ -789,28 +771,6 @@ async def handle_grant_application_pipeline(  # noqa: PLR0912, PLR0915
                     session_maker=session_maker,
                     trace_id=trace_id,
                 )
-
-                try:
-                    save_application_output(
-                        application_id=str(application_id),
-                        application_title=grant_application.title,
-                        application_text=application_text,
-                        output_format="md",
-                    )
-                    save_sections_breakdown(
-                        application_id=str(application_id),
-                        application_title=grant_application.title,
-                        grant_sections=grant_template.grant_sections,
-                        section_texts=complete_section_texts,
-                    )
-                except Exception as e:
-                    logger.warning(
-                        "Failed to save red team output (non-fatal)",
-                        application_id=str(application_id),
-                        error=str(e),
-                        error_type=type(e).__name__,
-                        trace_id=trace_id,
-                    )
 
                 try:
                     async with session_maker() as session, session.begin():

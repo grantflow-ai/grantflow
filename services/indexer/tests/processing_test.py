@@ -194,10 +194,10 @@ async def test_process_source_json_content(
     mock_chunk: Chunk,
     mock_vector_dto: VectorDTO,
 ) -> None:
-    json_content = {"key": "value", "nested": {"data": "test"}}
+    json_content_str = '{"key":"value","nested":{"data":"test"}}'
 
     result = MagicMock()
-    result.content = json_content
+    result.content = json_content_str
     result.mime_type = "application/json"
     result.chunks = ["JSON chunk"]
     result.metadata = {}
@@ -214,10 +214,6 @@ async def test_process_source_json_content(
         new_callable=AsyncMock,
         return_value=[mock_vector_dto],
     )
-    mock_serialize = mocker.patch(
-        "packages.shared_utils.src.processing.serialize",
-        return_value=b'{"key":"value","nested":{"data":"test"}}',
-    )
     mocker.patch(
         "packages.shared_utils.src.processing.analyze_scientific_content",
         new_callable=AsyncMock,
@@ -232,9 +228,7 @@ async def test_process_source_json_content(
     )
 
     assert len(vectors) == 1
-    assert text_content == '{"key":"value","nested":{"data":"test"}}'
-
-    mock_serialize.assert_called_once_with(json_content)
+    assert text_content == json_content_str
 
 
 async def test_process_source_empty_content(
@@ -243,7 +237,7 @@ async def test_process_source_empty_content(
     result = MagicMock()
     result.content = ""
     result.mime_type = "text/plain"
-    result.chunks = None
+    result.chunks = [""]
     result.metadata = {}
     result.entities = []
     result.keywords = []

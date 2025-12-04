@@ -132,7 +132,7 @@ As the LAST SCIENTIFIC EDITOR before submission, review the grant proposal compr
 ### 3. CFP Requirements
 {cfp_text}
 
-{argument_structure_section}
+{scientific_analysis_section}
 ---
 
 ## Task Instructions
@@ -391,21 +391,6 @@ SELECTIVE_EDITS_JSON_SCHEMA = {
 logger = get_logger(__name__)
 
 
-def _format_argument_structure_for_review(argument_structure: "ScientificAnalysisResult | None") -> str:
-    """Format scientific analysis data for editorial review.
-
-    Args:
-        argument_structure: Extracted scientific analysis containing arguments, evidence,
-            hypotheses, and conclusions with source attribution and metadata.
-
-    Returns:
-        Formatted JSON string or empty string if no analysis is provided.
-    """
-    if argument_structure is None:
-        return ""
-    return serialize(argument_structure).decode()
-
-
 async def retrieve_knowledge_base_for_application(
     *,
     application_id: str,
@@ -472,41 +457,9 @@ async def perform_critical_review(
     application_text: str,
     cfp_text: str,
     knowledge_base: str | None = None,
-    argument_structure: "ScientificAnalysisResult | None" = None,
+    scientific_analysis: "ScientificAnalysisResult | None" = None,
     trace_id: str,
 ) -> RedTeamReviewDTO:
-    """Run comprehensive editorial review on grant application.
-
-    Performs dual-focus editorial review:
-    1. Data Verification: Checks that all facts, numbers, entities match RAG source
-    2. Writing Supervision: Evaluates clarity, specificity, scientific language
-
-    The editor does NOT judge scientific merit or feasibility - only data preservation
-    and writing quality.
-
-    Args:
-        application_text: Complete grant application markdown
-        cfp_text: Call for Proposals full text
-        knowledge_base: RAG retrieval context (source literature used to generate application)
-        trace_id: Trace ID for logging
-
-    Returns:
-        RedTeamReviewDTO with 600-1000 word editorial letter containing:
-        - Data verification issues (numbers, entities, temporal clarity)
-        - Writing quality issues (repetition, clarity, specificity)
-        - Positive observations
-        - Constructive suggestions for improvement
-
-    Example:
-        >>> review = await run_critical_review(
-        ...     application_text="# Abstract\\n\\nOur revolutionary...",
-        ...     cfp_text="NIH R01 Requirements:\\n1. Abstract (300 words)...",
-        ...     knowledge_base="Scientific papers:\\n\\n1. Paper by Smith et al...",
-        ...     trace_id="review-123",
-        ... )
-        >>> print(len(review["review"].split()))
-        847  # Word count in 600-1000 range
-    """
     logger.info(
         "Starting editorial review",
         trace_id=trace_id,
@@ -514,7 +467,7 @@ async def perform_critical_review(
         cfp_length=len(cfp_text),
         has_knowledge_base=knowledge_base is not None,
         knowledge_base_length=len(knowledge_base) if knowledge_base else 0,
-        has_argument_structure=argument_structure is not None,
+        has_scientific_analysis=scientific_analysis is not None,
     )
 
     if knowledge_base:
@@ -533,13 +486,13 @@ async def perform_critical_review(
             4. Still provide 600-1000 word editorial letter with constructive feedback
         """).strip()
 
-    argument_structure_section = _format_argument_structure_for_review(argument_structure)
+    scientific_analysis_section = "" if scientific_analysis is None else serialize(scientific_analysis).decode()
 
     user_prompt = CRITICAL_REVIEWER_USER_PROMPT.format(
         cfp_text=cfp_text,
         application_text=application_text,
         knowledge_base=knowledge_base_text,
-        argument_structure_section=argument_structure_section,
+        scientific_analysis_section=scientific_analysis_section,
     )
 
     review = await handle_completions_request(
@@ -573,34 +526,6 @@ async def apply_selective_edits(
     knowledge_base: str,
     trace_id: str,
 ) -> SelectiveEditsDTO:
-    """Selectively apply editorial suggestions to a grant proposal.
-
-    This function acts as a "Great Application Editor" that:
-    1. Reads the original proposal, review, and RAG knowledge base
-    2. Evaluates each review suggestion using three criteria:
-       - Is the comment correct?
-       - Is the comment based on RAG?
-       - Does it make the proposal better?
-    3. Only approves changes if ALL THREE criteria are met
-    4. Makes only minor changes (1-2 sentences)
-    5. Protects the scientist's work by being conservative
-
-    Args:
-        application_text: Original grant application text
-        review_letter: Editorial review with suggestions
-        knowledge_base: RAG knowledge base (ground truth)
-        trace_id: Trace ID for logging
-
-    Returns:
-        SelectiveEditsDTO with approved changes, rejected count, and summary
-
-    Example:
-        >>> edits = await apply_selective_edits(
-        ...     application_text=proposal_text, review_letter=review_text, knowledge_base=rag_kb, trace_id="edit-123"
-        ... )
-        >>> print(f"Applied {len(edits['changes'])} changes")
-        >>> print(f"Rejected {edits['rejected']} suggestions")
-    """
     logger.info(
         "Starting selective editing",
         trace_id=trace_id,

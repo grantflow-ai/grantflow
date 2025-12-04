@@ -42,17 +42,6 @@ WIKIDATA_ENRICHMENT_BATCH_SIZE: Final[int] = 4
 def get_aggregated_scientific_analysis(
     grant_application: "GrantApplication",
 ) -> ScientificAnalysisResult | None:
-    """Get aggregated scientific analysis from all rag sources of a grant application.
-
-    This reads pre-computed scientific analysis from RagSource.scientific_analysis_json
-    for all source documents associated with the grant application and aggregates them.
-
-    Args:
-        grant_application: The grant application with rag_sources relationship loaded
-
-    Returns:
-        Aggregated ScientificAnalysisResult or None if no analyses available
-    """
     analyses: list[ScientificAnalysisResult] = []
 
     if not grant_application.rag_sources:
@@ -68,7 +57,7 @@ def get_aggregated_scientific_analysis(
             continue
         if rag_source.deleted_at is not None:
             continue
-        analysis = rag_source.scientific_analysis_json
+        analysis = rag_source.scientific_analysis
         if analysis is None:
             continue
         analyses.append(analysis)
@@ -105,7 +94,6 @@ async def handle_generate_sections_stage(
 ) -> GenerateSectionsStageDTO:
     await job_manager.ensure_not_cancelled()
 
-    # important: in this stage we generate the long form text for all sections EXCEPT the research plan (workplan) section ~keep
     long_form_sections: list[GrantLongFormSection] = []
     work_plan_section: GrantLongFormSection = dto["work_plan_section"]
     research_plan_text = dto["research_plan_text"]
@@ -160,7 +148,7 @@ async def handle_generate_sections_stage(
             research_plan_text=research_plan_text,
             trace_id=trace_id,
             job_manager=job_manager,
-            argument_structure=scientific_analysis,
+            scientific_analysis=scientific_analysis,
         )
         for section in long_form_sections
     ]
@@ -352,7 +340,17 @@ async def handle_enrich_terminology_stage(
                 error=str(result),
                 trace_id=trace_id,
             )
-            processed_enrichments.append(cast("EnrichmentDataDTO", {}))
+            processed_enrichments.append(
+                EnrichmentDataDTO(
+                    enriched="",
+                    queries=[],
+                    terms=[],
+                    context="",
+                    instructions="",
+                    description="",
+                    questions=[],
+                )
+            )
             failed_count += 1
         else:
             processed_enrichments.append(cast("EnrichmentDataDTO", result))
@@ -438,8 +436,6 @@ async def handle_generate_research_plan_stage(
             ]
         )
 
-    total_tasks = sum(len(research_objective["research_tasks"]) for research_objective in research_objectives)
-
     if grant_application.form_inputs is None:
         form_inputs_for_workplan: ResearchDeepDive | TranslationalResearchDeepDive = ResearchDeepDive()
     else:
@@ -451,7 +447,7 @@ async def handle_generate_research_plan_stage(
         application_id=str(grant_application.id),
         form_inputs=form_inputs_for_workplan,
         components=dtos,
-        argument_structure=scientific_analysis,
+        scientific_analysis=scientific_analysis,
         trace_id=trace_id,
         job_manager=job_manager,
     )

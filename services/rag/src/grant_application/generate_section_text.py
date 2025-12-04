@@ -8,10 +8,10 @@ from packages.db.src.json_objects import (
     TranslationalResearchDeepDive,
 )
 from packages.shared_utils.src.logger import get_logger
+from packages.shared_utils.src.serialization import serialize
 
 from services.rag.src.constants import MIN_WORDS_RATIO
 from services.rag.src.evaluation_criteria import get_evaluation_kwargs
-from services.rag.src.grant_application.generate_work_plan_text import _format_argument_structure
 from services.rag.src.utils.evaluation import with_evaluation
 from services.rag.src.utils.lengths import compute_word_bounds, constraint_to_word_limit
 from services.rag.src.utils.long_form import generate_long_form_text
@@ -178,7 +178,7 @@ SECTION_PROMPT: Final[PromptTemplate] = PromptTemplate(
     ### Research Plan
     ${research_plan_context}
 
-    ${argument_structure_section}
+    ${scientific_analysis_section}
 
     ---
 
@@ -208,7 +208,7 @@ async def handle_generate_section_text(
     research_plan_text: str,
     trace_id: str,
     job_manager: "JobManager[StageDTO]",
-    argument_structure: "ScientificAnalysisResult | None" = None,
+    scientific_analysis: "ScientificAnalysisResult | None" = None,
 ) -> str:
     length_constraint = section.get("length_constraint")
     if length_constraint is not None:
@@ -262,7 +262,7 @@ async def handle_generate_section_text(
     )
 
     compressed_shared_context = compress_text(shared_context)
-    argument_structure_section = _format_argument_structure(argument_structure)
+    scientific_analysis_section = "" if scientific_analysis is None else serialize(scientific_analysis).decode()
 
     full_prompt = SECTION_PROMPT.to_string(
         section_title=section_title,
@@ -273,7 +273,7 @@ async def handle_generate_section_text(
         cfp_requirements=cfp_requirements_text,
         context=compressed_shared_context,
         research_plan_context=compressed_research_plan,
-        argument_structure_section=argument_structure_section,
+        scientific_analysis_section=scientific_analysis_section,
     )
 
     result = await with_evaluation(

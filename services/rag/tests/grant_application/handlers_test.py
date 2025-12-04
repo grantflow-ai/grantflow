@@ -552,176 +552,176 @@ def sample_scientific_analysis() -> ScientificAnalysisResult:
     )
 
 
-class TestGetAggregatedScientificAnalysis:
-    """Tests for get_aggregated_scientific_analysis function."""
+def test_get_aggregated_scientific_analysis_returns_none_when_no_rag_sources() -> None:
+    mock_grant_application = MagicMock(spec=GrantApplication)
+    mock_grant_application.rag_sources = []
 
-    def test_returns_none_when_no_rag_sources(self) -> None:
-        mock_grant_application = MagicMock(spec=GrantApplication)
-        mock_grant_application.rag_sources = []
+    result = get_aggregated_scientific_analysis(mock_grant_application)
 
-        result = get_aggregated_scientific_analysis(mock_grant_application)
+    assert result is None
 
-        assert result is None
 
-    def test_returns_none_when_rag_sources_is_none(self) -> None:
-        mock_grant_application = MagicMock(spec=GrantApplication)
-        mock_grant_application.rag_sources = None
+def test_get_aggregated_scientific_analysis_returns_none_when_rag_sources_is_none() -> None:
+    mock_grant_application = MagicMock(spec=GrantApplication)
+    mock_grant_application.rag_sources = None
 
-        result = get_aggregated_scientific_analysis(mock_grant_application)
+    result = get_aggregated_scientific_analysis(mock_grant_application)
 
-        assert result is None
+    assert result is None
 
-    def test_returns_none_when_all_sources_have_no_analysis(self) -> None:
-        mock_rag_source = MagicMock(spec=RagSource)
-        mock_rag_source.deleted_at = None
-        mock_rag_source.scientific_analysis_json = None
 
-        mock_grant_source = MagicMock(spec=GrantApplicationSource)
-        mock_grant_source.rag_source = mock_rag_source
+def test_get_aggregated_scientific_analysis_returns_none_when_all_sources_have_no_analysis() -> None:
+    mock_rag_source = MagicMock(spec=RagSource)
+    mock_rag_source.deleted_at = None
+    mock_rag_source.scientific_analysis = None
 
-        mock_grant_application = MagicMock(spec=GrantApplication)
-        mock_grant_application.rag_sources = [mock_grant_source]
+    mock_grant_source = MagicMock(spec=GrantApplicationSource)
+    mock_grant_source.rag_source = mock_rag_source
 
-        result = get_aggregated_scientific_analysis(mock_grant_application)
+    mock_grant_application = MagicMock(spec=GrantApplication)
+    mock_grant_application.rag_sources = [mock_grant_source]
 
-        assert result is None
+    result = get_aggregated_scientific_analysis(mock_grant_application)
 
-    def test_returns_none_when_rag_source_is_none(self) -> None:
-        mock_grant_source = MagicMock(spec=GrantApplicationSource)
-        mock_grant_source.rag_source = None
+    assert result is None
 
-        mock_grant_application = MagicMock(spec=GrantApplication)
-        mock_grant_application.rag_sources = [mock_grant_source]
 
-        result = get_aggregated_scientific_analysis(mock_grant_application)
+def test_get_aggregated_scientific_analysis_returns_none_when_rag_source_is_none() -> None:
+    mock_grant_source = MagicMock(spec=GrantApplicationSource)
+    mock_grant_source.rag_source = None
 
-        assert result is None
+    mock_grant_application = MagicMock(spec=GrantApplication)
+    mock_grant_application.rag_sources = [mock_grant_source]
 
-    def test_skips_deleted_sources(
-        self,
-        sample_scientific_analysis: ScientificAnalysisResult,
-    ) -> None:
-        from datetime import UTC, datetime
+    result = get_aggregated_scientific_analysis(mock_grant_application)
 
-        mock_deleted_source = MagicMock(spec=RagSource)
-        mock_deleted_source.deleted_at = datetime.now(UTC)
-        mock_deleted_source.scientific_analysis_json = sample_scientific_analysis
+    assert result is None
 
-        mock_deleted_grant_source = MagicMock(spec=GrantApplicationSource)
-        mock_deleted_grant_source.rag_source = mock_deleted_source
 
-        mock_grant_application = MagicMock(spec=GrantApplication)
-        mock_grant_application.rag_sources = [mock_deleted_grant_source]
+def test_get_aggregated_scientific_analysis_skips_deleted_sources(
+    sample_scientific_analysis: ScientificAnalysisResult,
+) -> None:
+    from datetime import UTC, datetime
 
-        result = get_aggregated_scientific_analysis(mock_grant_application)
+    mock_deleted_source = MagicMock(spec=RagSource)
+    mock_deleted_source.deleted_at = datetime.now(UTC)
+    mock_deleted_source.scientific_analysis = sample_scientific_analysis
 
-        assert result is None
+    mock_deleted_grant_source = MagicMock(spec=GrantApplicationSource)
+    mock_deleted_grant_source.rag_source = mock_deleted_source
 
-    def test_aggregates_single_source_analysis(
-        self,
-        sample_scientific_analysis: ScientificAnalysisResult,
-    ) -> None:
-        mock_rag_source = MagicMock(spec=RagSource)
-        mock_rag_source.deleted_at = None
-        mock_rag_source.scientific_analysis_json = sample_scientific_analysis
+    mock_grant_application = MagicMock(spec=GrantApplication)
+    mock_grant_application.rag_sources = [mock_deleted_grant_source]
 
-        mock_grant_source = MagicMock(spec=GrantApplicationSource)
-        mock_grant_source.rag_source = mock_rag_source
+    result = get_aggregated_scientific_analysis(mock_grant_application)
 
-        mock_grant_application = MagicMock(spec=GrantApplication)
-        mock_grant_application.rag_sources = [mock_grant_source]
+    assert result is None
 
-        result = get_aggregated_scientific_analysis(mock_grant_application)
 
-        assert result is not None
-        assert result["metadata"]["total_arguments"] == 1
-        assert result["metadata"]["total_objectives"] == 1
-        assert result["metadata"]["total_tasks"] == 1
-        assert len(result["arguments"]) == 1
+def test_get_aggregated_scientific_analysis_aggregates_single_source_analysis(
+    sample_scientific_analysis: ScientificAnalysisResult,
+) -> None:
+    mock_rag_source = MagicMock(spec=RagSource)
+    mock_rag_source.deleted_at = None
+    mock_rag_source.scientific_analysis = sample_scientific_analysis
 
-    def test_aggregates_multiple_source_analyses(
-        self,
-        sample_scientific_analysis: ScientificAnalysisResult,
-    ) -> None:
-        mock_rag_source1 = MagicMock(spec=RagSource)
-        mock_rag_source1.deleted_at = None
-        mock_rag_source1.scientific_analysis_json = sample_scientific_analysis
+    mock_grant_source = MagicMock(spec=GrantApplicationSource)
+    mock_grant_source.rag_source = mock_rag_source
 
-        mock_rag_source2 = MagicMock(spec=RagSource)
-        mock_rag_source2.deleted_at = None
-        mock_rag_source2.scientific_analysis_json = ScientificAnalysisResult(
-            arguments=[
-                ArgumentElement(
-                    id=1,
-                    text="Second source argument",
-                    context="Methods",
-                    type="supporting",
-                    source="writers",
-                    temporal_context="experiment",
-                    temporal_order=0.2,
-                    action_type="author_action",
-                    pivot=False,
-                    rhetorical_action="describe",
-                    hierarchy="2.0",
-                )
-            ],
-            evidence=[],
-            hypotheses=[],
-            conclusions=[],
-            experiment_results=[],
-            sources=[],
-            objectives=[],
-            tasks=[],
-            metadata=AnalysisMetadata(
-                total_arguments=1,
-                total_evidence=0,
-                total_hypotheses=0,
-                total_conclusions=0,
-                total_results=0,
-                total_sources=0,
-                total_objectives=0,
-                total_tasks=0,
-                article_type="research",
-            ),
-        )
+    mock_grant_application = MagicMock(spec=GrantApplication)
+    mock_grant_application.rag_sources = [mock_grant_source]
 
-        mock_grant_source1 = MagicMock(spec=GrantApplicationSource)
-        mock_grant_source1.rag_source = mock_rag_source1
+    result = get_aggregated_scientific_analysis(mock_grant_application)
 
-        mock_grant_source2 = MagicMock(spec=GrantApplicationSource)
-        mock_grant_source2.rag_source = mock_rag_source2
+    assert result is not None
+    assert result["metadata"]["total_arguments"] == 1
+    assert result["metadata"]["total_objectives"] == 1
+    assert result["metadata"]["total_tasks"] == 1
+    assert len(result["arguments"]) == 1
 
-        mock_grant_application = MagicMock(spec=GrantApplication)
-        mock_grant_application.rag_sources = [mock_grant_source1, mock_grant_source2]
 
-        result = get_aggregated_scientific_analysis(mock_grant_application)
+def test_get_aggregated_scientific_analysis_aggregates_multiple_source_analyses(
+    sample_scientific_analysis: ScientificAnalysisResult,
+) -> None:
+    mock_rag_source1 = MagicMock(spec=RagSource)
+    mock_rag_source1.deleted_at = None
+    mock_rag_source1.scientific_analysis = sample_scientific_analysis
 
-        assert result is not None
-        assert result["metadata"]["total_arguments"] == 2
-        assert len(result["arguments"]) == 2
+    mock_rag_source2 = MagicMock(spec=RagSource)
+    mock_rag_source2.deleted_at = None
+    mock_rag_source2.scientific_analysis = ScientificAnalysisResult(
+        arguments=[
+            ArgumentElement(
+                id=1,
+                text="Second source argument",
+                context="Methods",
+                type="supporting",
+                source="writers",
+                temporal_context="experiment",
+                temporal_order=0.2,
+                action_type="author_action",
+                pivot=False,
+                rhetorical_action="describe",
+                hierarchy="2.0",
+            )
+        ],
+        evidence=[],
+        hypotheses=[],
+        conclusions=[],
+        experiment_results=[],
+        sources=[],
+        objectives=[],
+        tasks=[],
+        metadata=AnalysisMetadata(
+            total_arguments=1,
+            total_evidence=0,
+            total_hypotheses=0,
+            total_conclusions=0,
+            total_results=0,
+            total_sources=0,
+            total_objectives=0,
+            total_tasks=0,
+            article_type="research",
+        ),
+    )
 
-    def test_skips_sources_without_analysis_in_mixed_set(
-        self,
-        sample_scientific_analysis: ScientificAnalysisResult,
-    ) -> None:
-        mock_rag_source_with_analysis = MagicMock(spec=RagSource)
-        mock_rag_source_with_analysis.deleted_at = None
-        mock_rag_source_with_analysis.scientific_analysis_json = sample_scientific_analysis
+    mock_grant_source1 = MagicMock(spec=GrantApplicationSource)
+    mock_grant_source1.rag_source = mock_rag_source1
 
-        mock_rag_source_without_analysis = MagicMock(spec=RagSource)
-        mock_rag_source_without_analysis.deleted_at = None
-        mock_rag_source_without_analysis.scientific_analysis_json = None
+    mock_grant_source2 = MagicMock(spec=GrantApplicationSource)
+    mock_grant_source2.rag_source = mock_rag_source2
 
-        mock_grant_source1 = MagicMock(spec=GrantApplicationSource)
-        mock_grant_source1.rag_source = mock_rag_source_with_analysis
+    mock_grant_application = MagicMock(spec=GrantApplication)
+    mock_grant_application.rag_sources = [mock_grant_source1, mock_grant_source2]
 
-        mock_grant_source2 = MagicMock(spec=GrantApplicationSource)
-        mock_grant_source2.rag_source = mock_rag_source_without_analysis
+    result = get_aggregated_scientific_analysis(mock_grant_application)
 
-        mock_grant_application = MagicMock(spec=GrantApplication)
-        mock_grant_application.rag_sources = [mock_grant_source1, mock_grant_source2]
+    assert result is not None
+    assert result["metadata"]["total_arguments"] == 2
+    assert len(result["arguments"]) == 2
 
-        result = get_aggregated_scientific_analysis(mock_grant_application)
 
-        assert result is not None
-        assert result["metadata"]["total_arguments"] == 1
+def test_get_aggregated_scientific_analysis_skips_sources_without_analysis_in_mixed_set(
+    sample_scientific_analysis: ScientificAnalysisResult,
+) -> None:
+    mock_rag_source_with_analysis = MagicMock(spec=RagSource)
+    mock_rag_source_with_analysis.deleted_at = None
+    mock_rag_source_with_analysis.scientific_analysis = sample_scientific_analysis
+
+    mock_rag_source_without_analysis = MagicMock(spec=RagSource)
+    mock_rag_source_without_analysis.deleted_at = None
+    mock_rag_source_without_analysis.scientific_analysis = None
+
+    mock_grant_source1 = MagicMock(spec=GrantApplicationSource)
+    mock_grant_source1.rag_source = mock_rag_source_with_analysis
+
+    mock_grant_source2 = MagicMock(spec=GrantApplicationSource)
+    mock_grant_source2.rag_source = mock_rag_source_without_analysis
+
+    mock_grant_application = MagicMock(spec=GrantApplication)
+    mock_grant_application.rag_sources = [mock_grant_source1, mock_grant_source2]
+
+    result = get_aggregated_scientific_analysis(mock_grant_application)
+
+    assert result is not None
+    assert result["metadata"]["total_arguments"] == 1

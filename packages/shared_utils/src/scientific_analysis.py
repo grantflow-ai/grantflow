@@ -1,13 +1,7 @@
-"""Scientific article analysis for extracting structured metadata vectors.
-
-This module provides LLM-based extraction of scientific elements (arguments, evidence,
-hypotheses, conclusions, experiment results, and sources) from documents to create
-rich metadata vectors for enhanced retrieval.
-"""
-
-import asyncio
+from asyncio import timeout
 from datetime import UTC, datetime
-from typing import Final, cast
+from textwrap import dedent
+from typing import Any, Final, TypedDict, TypeVar, cast
 
 from google import genai
 from packages.db.src.json_objects import (
@@ -30,595 +24,307 @@ from packages.shared_utils.src.serialization import deserialize
 
 logger = get_logger(__name__)
 
-# Thinking budget for scientific analysis - needs deep reasoning
-SCIENTIFIC_ANALYSIS_THINKING_BUDGET: Final[int] = 6000
+THINKING_BUDGET: Final[int] = 4000
 
+CORE_SYSTEM_PROMPT: Final[str] = dedent(
+    """
+You are a scientific article analysis expert. Read the article and extract factual elements only.
 
-SCIENTIFIC_ANALYSIS_SYSTEM_PROMPT: Final[str] = """
-You are a scientific article analysis expert. Your task is to carefully read the provided scientific article and extract ALL key elements with complete information.
+## Elements
+- Arguments: every claim/position with context
+- Evidence: data/observations/citations supporting claims
+- Hypotheses: proposed explanations or predictions
+- Conclusions: final or intermediate takeaways
+- Experiment results: reported outcomes and measurements
 
-Extract the following elements from the article. Each element can appear multiple times throughout the article, so create a separate item for each occurrence:
-
-1. **Arguments**: All arguments made in the article. An argument is a claim or position that the authors propose or defend. Extract each argument separately with its full context.
-
-2. **Evidence**: All pieces of evidence presented. This includes data, observations, citations, examples, or any supporting information used to back up claims. Extract each piece of evidence separately.
-
-3. **Hypotheses**: All hypotheses stated in the article. A hypothesis is a proposed explanation or prediction that can be tested. Extract each hypothesis with its full formulation.
-
-4. **Conclusions**: All conclusions drawn in the article. This includes final conclusions, intermediate conclusions, and implications. Extract each conclusion separately.
-
-5. **Experiment Results**: All experimental results, findings, or outcomes reported. Include quantitative data, qualitative observations, and any reported measurements or outcomes.
-
-6. **Sources**: All sources, references, or citations mentioned in the article. Include author names, publication info, or any referenced work.
-
-7. **Objectives**: Research objectives or goals stated in the article. These are high-level aims the research intends to achieve. Extract each objective with its scope and expected outcome.
-
-8. **Tasks**: Specific tasks or steps required to achieve the objectives. These are concrete actions or work items. For each task, identify which objective it supports and any dependencies on other tasks.
-
-## Extraction Guidelines
-- Extract EVERYTHING - be comprehensive and thorough
-- Each sentence can contain multiple items - extract them separately
-- Preserve the exact wording from the article when extracting text
-- If an element appears multiple times, create separate entries
-- Fill in all fields for each item
-- Do NOT omit any information
-- Include full context and details for each extracted element
-
-## Temporal Ordering Rules
-- For "source": Determine if the argument/evidence/result is from the article's authors ("writers") or from cited work ("non_writers")
-- For "temporal_context":
-  - "problem" = the research gap, problem, or motivation being addressed (always at the beginning)
-  - "past" = research/work cited from other publications
-  - "experiment" = the main scientific work/experiments/methods presented in THIS article
-  - "future" = proposed future work, implications, or recommendations
-- For "temporal_order":
-  - "problem" items: ALWAYS use 0 (the starting point)
-  - "experiment" items: Use 0.1-0.99 based on experimental pipeline order
-  - "future" items: Use 1.0-2.0 (immediate future work=1.0, long-term implications=2.0)
-  - "past" items: Use negative numbers from -0.99 (oldest) to -0.01 (newest) based on citation date
-
-## Objectives and Tasks Rules
-- Objectives and Tasks are ALWAYS in "future" temporal_context (they represent planned/proposed work)
-- For "temporal_order" of objectives and tasks:
-  - Use 1.0-1.5 for near-term objectives/tasks (immediate next steps)
-  - Use 1.5-2.0 for longer-term objectives/tasks (distant future goals)
-  - Order objectives by their logical sequence (which objective comes first)
-  - Order tasks by their execution sequence within their parent objective
-- For task dependencies:
-  - Identify which tasks must be completed before other tasks can begin
-  - Use "depends_on" to list task IDs that must complete first
-  - A task with no dependencies has an empty "depends_on" array
-- For task-objective relationships:
-  - Each task must specify which objective(s) it supports via "supports_objective"
-  - Use the objective ID to reference the parent objective
-
-## Pivot Identification Rules
-- A "pivot" is a major conceptual shift in perspective, method, or approach - not just any new idea
-- In most scientific articles, there are typically 2 major pivots:
-  1. ABSTRACT PIVOT: Where the novel approach is first introduced/announced
-  2. METHODOLOGY PIVOT: Where the major methodological shift is explained in detail
-- Mark pivot=true ONLY for these major turning points
-- Most items should have pivot=false - be selective
+## Rules
+- Preserve wording from the article
+- Use ids as given; keep ordering stable
+- Source: writers vs non_writers
+- temporal_context: problem (start), past (citations), experiment (work in this article), future (implications)
+- temporal_order: problem=0, past=-0.99..-0.01, experiment=0.1..0.99 in sequence, future=1.0..2.0
+- Pivots are rare; set pivot=true only for major shifts
+- Fill type-specific fields when present (supports, based_on, testable, experiment)
 """
+)
 
+PLAN_SYSTEM_PROMPT: Final[str] = dedent(
+    """
+You are a scientific article analysis expert. Read the article and extract planned work plus citations.
 
-SCIENTIFIC_ANALYSIS_USER_PROMPT: Final[str] = """
-Analyze the following scientific article and extract all key elements.
+## Elements
+- Objectives: research goals; future-only
+- Tasks: concrete steps with dependencies; future-only
+- Sources: citations/datasets/methods with relevance
+- Metadata: simple counts and article type
 
-## Article Content
+## Rules
+- Preserve wording from the article
+- Keep ids stable; link tasks to objectives via ids
+- depends_on contains task ids; can be empty
+- temporal_context for objectives/tasks is future; temporal_order 1.0-1.5 (near), 1.5-2.0 (later)
+- Provide counts in metadata (arguments, evidence, hypotheses, conclusions, results, sources, objectives, tasks) and article_type
+"""
+)
+
+CORE_USER_PROMPT: Final[str] = dedent(
+    """Analyze the article and extract arguments, evidence, hypotheses, conclusions, and experiment results.
+
 <article>
 {article_content}
 </article>
-
-Extract all arguments, evidence, hypotheses, conclusions, experiment results, and sources following the schema.
 """
+)
+
+PLAN_USER_PROMPT: Final[str] = dedent(
+    """Analyze the article and extract objectives, tasks, sources, and summary metadata.
+
+<article>
+{article_content}
+</article>
+"""
+)
 
 
-# JSON Schema for Gemini structured output
-scientific_analysis_schema: Final[dict[str, object]] = {
+class CorePayload(TypedDict):
+    arguments: list[ArgumentElement]
+    evidence: list[EvidenceElement]
+    hypotheses: list[HypothesisElement]
+    conclusions: list[ConclusionElement]
+    results: list[ExperimentResultElement]
+
+
+class PlanPayload(TypedDict):
+    objectives: list[ObjectiveElement]
+    tasks: list[TaskElement]
+    sources: list[SourceElement]
+    meta: AnalysisMetadata
+
+
+T = TypeVar("T")
+E = TypeVar("E", bound=dict[str, Any])
+
+
+def _offset_elements(elements: list[E], id_offset: int) -> tuple[list[E], int]:
+    result: list[E] = []
+    max_id = 0
+    for elem in elements:
+        new_elem = cast(E, {**elem, "id": elem["id"] + id_offset})
+        result.append(new_elem)
+        max_id = max(max_id, elem["id"])
+    return result, max_id
+
+
+async def _generate_structured_response(
+    *,
+    prompt_identifier: str,
+    system_prompt: str,
+    user_prompt: str,
+    response_schema: dict[str, Any],
+    response_type: type[T],
+    trace_id: str,
+    timeout_seconds: float = 300,
+) -> T:
+    client = get_google_ai_client()
+
+    config = genai.types.GenerateContentConfig(
+        response_mime_type=CONTENT_TYPE_JSON,
+        response_schema=response_schema,
+        temperature=0,
+        system_instruction=system_prompt,
+        safety_settings=[
+            genai.types.SafetySetting(
+                category=genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+            genai.types.SafetySetting(
+                category=genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+            genai.types.SafetySetting(
+                category=genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+            genai.types.SafetySetting(
+                category=genai.types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
+            ),
+        ],
+        thinking_config=genai.types.ThinkingConfig(thinking_budget=THINKING_BUDGET),
+    )
+
+    start_time = datetime.now(UTC)
+
+    async with timeout(timeout_seconds):
+        response = await client._aio.models.generate_content(  # noqa: SLF001
+            model=GEMINI_FLASH_MODEL,
+            contents=user_prompt,
+            config=config,
+        )
+
+    elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
+
+    usage_metadata = getattr(response, "usage_metadata", None)
+    logger.info(
+        "Scientific analysis call completed",
+        prompt_identifier=prompt_identifier,
+        source_id=trace_id,
+        elapsed_ms=round(elapsed_ms, 2),
+        prompt_tokens=getattr(usage_metadata, "prompt_token_count", None)
+        if usage_metadata
+        else None,
+        completion_tokens=getattr(usage_metadata, "candidates_token_count", None)
+        if usage_metadata
+        else None,
+        total_tokens=getattr(usage_metadata, "total_token_count", None)
+        if usage_metadata
+        else None,
+        thinking_budget=THINKING_BUDGET,
+    )
+
+    return deserialize(response.text or "", response_type)
+
+
+core_schema: Final[dict[str, Any]] = {
     "type": "object",
     "properties": {
         "arguments": {
             "type": "array",
-            "description": "All arguments made in the article",
             "items": {
                 "type": "object",
                 "properties": {
                     "id": {"type": "integer"},
-                    "text": {
-                        "type": "string",
-                        "description": "The complete argument as stated",
-                    },
-                    "context": {
-                        "type": "string",
-                        "description": "Brief context or section where this appears",
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": ["main", "supporting", "counter"],
-                    },
-                    "source": {"type": "string", "enum": ["writers", "non_writers"]},
-                    "temporal_context": {
-                        "type": "string",
-                        "enum": ["past", "future", "experiment", "problem"],
-                    },
-                    "temporal_order": {
-                        "type": "number",
-                        "description": "Temporal ordering value",
-                    },
-                    "action_type": {
-                        "type": "string",
-                        "enum": ["author_action", "reaction"],
-                    },
+                    "text": {"type": "string"},
+                    "type": {"type": "string"},
+                    "source": {"type": "string"},
+                    "temporal_context": {"type": "string"},
+                    "temporal_order": {"type": "number"},
                     "pivot": {"type": "boolean"},
-                    "rhetorical_action": {
-                        "type": "string",
-                        "enum": [
-                            "argue",
-                            "support_by_evidence",
-                            "support_by_citation",
-                            "describe",
-                            "bring_contra",
-                            "dismiss_contra",
-                            "conclude",
-                            "describe_other_works",
-                            "bring_hypothesis",
-                            "bring_theory",
-                            "underline",
-                            "step_back",
-                            "compare",
-                            "critique",
-                            "justify",
-                            "clarify",
-                            "synthesize",
-                            "question",
-                            "propose",
-                        ],
-                    },
-                    "hierarchy": {
-                        "type": "string",
-                        "description": "Hierarchical notation (e.g., 1.0, 1.1, 1.1.1)",
-                    },
                 },
-                "required": [
-                    "id",
-                    "text",
-                    "context",
-                    "type",
-                    "source",
-                    "temporal_context",
-                    "temporal_order",
-                    "action_type",
-                    "pivot",
-                    "rhetorical_action",
-                    "hierarchy",
-                ],
+                "required": ["id", "text", "type", "source"],
             },
         },
         "evidence": {
             "type": "array",
-            "description": "All pieces of evidence presented",
             "items": {
                 "type": "object",
                 "properties": {
                     "id": {"type": "integer"},
-                    "text": {
-                        "type": "string",
-                        "description": "The complete evidence as presented",
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": [
-                            "experimental",
-                            "observational",
-                            "citation",
-                            "statistical",
-                            "other",
-                        ],
-                    },
-                    "supports": {
-                        "type": "string",
-                        "description": "What argument or claim this evidence supports",
-                    },
-                    "source": {"type": "string", "enum": ["writers", "non_writers"]},
-                    "temporal_context": {
-                        "type": "string",
-                        "enum": ["past", "future", "experiment", "problem"],
-                    },
+                    "text": {"type": "string"},
+                    "type": {"type": "string"},
+                    "supports": {"type": "string"},
+                    "source": {"type": "string"},
+                    "temporal_context": {"type": "string"},
                     "temporal_order": {"type": "number"},
-                    "action_type": {
-                        "type": "string",
-                        "enum": ["author_action", "reaction"],
-                    },
                     "pivot": {"type": "boolean"},
-                    "rhetorical_action": {
-                        "type": "string",
-                        "enum": [
-                            "argue",
-                            "support_by_evidence",
-                            "support_by_citation",
-                            "describe",
-                            "bring_contra",
-                            "dismiss_contra",
-                            "conclude",
-                            "describe_other_works",
-                            "bring_hypothesis",
-                            "bring_theory",
-                            "underline",
-                            "step_back",
-                            "compare",
-                            "critique",
-                            "justify",
-                            "clarify",
-                            "synthesize",
-                            "question",
-                            "propose",
-                        ],
-                    },
-                    "hierarchy": {"type": "string"},
                 },
-                "required": [
-                    "id",
-                    "text",
-                    "type",
-                    "supports",
-                    "source",
-                    "temporal_context",
-                    "temporal_order",
-                    "action_type",
-                    "pivot",
-                    "rhetorical_action",
-                    "hierarchy",
-                ],
+                "required": ["id", "text", "type", "source"],
             },
         },
         "hypotheses": {
             "type": "array",
-            "description": "All hypotheses stated in the article",
             "items": {
                 "type": "object",
                 "properties": {
                     "id": {"type": "integer"},
-                    "text": {
-                        "type": "string",
-                        "description": "The complete hypothesis statement",
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": ["primary", "secondary", "alternative"],
-                    },
-                    "testable": {
-                        "type": "string",
-                        "description": "How this hypothesis can be or was tested",
-                    },
-                    "source": {"type": "string", "enum": ["writers", "non_writers"]},
-                    "temporal_context": {
-                        "type": "string",
-                        "enum": ["past", "future", "experiment", "problem"],
-                    },
+                    "text": {"type": "string"},
+                    "type": {"type": "string"},
+                    "testable": {"type": "string"},
+                    "source": {"type": "string"},
+                    "temporal_context": {"type": "string"},
                     "temporal_order": {"type": "number"},
-                    "action_type": {
-                        "type": "string",
-                        "enum": ["author_action", "reaction"],
-                    },
                     "pivot": {"type": "boolean"},
-                    "rhetorical_action": {
-                        "type": "string",
-                        "enum": [
-                            "argue",
-                            "support_by_evidence",
-                            "support_by_citation",
-                            "describe",
-                            "bring_contra",
-                            "dismiss_contra",
-                            "conclude",
-                            "describe_other_works",
-                            "bring_hypothesis",
-                            "bring_theory",
-                            "underline",
-                            "step_back",
-                            "compare",
-                            "critique",
-                            "justify",
-                            "clarify",
-                            "synthesize",
-                            "question",
-                            "propose",
-                        ],
-                    },
-                    "hierarchy": {"type": "string"},
                 },
-                "required": [
-                    "id",
-                    "text",
-                    "type",
-                    "testable",
-                    "source",
-                    "temporal_context",
-                    "temporal_order",
-                    "action_type",
-                    "pivot",
-                    "rhetorical_action",
-                    "hierarchy",
-                ],
+                "required": ["id", "text", "type", "source"],
             },
         },
         "conclusions": {
             "type": "array",
-            "description": "All conclusions drawn in the article",
             "items": {
                 "type": "object",
                 "properties": {
                     "id": {"type": "integer"},
-                    "text": {
-                        "type": "string",
-                        "description": "The complete conclusion statement",
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": ["main", "intermediate", "implication"],
-                    },
-                    "based_on": {
-                        "type": "string",
-                        "description": "What this conclusion is based on",
-                    },
-                    "source": {"type": "string", "enum": ["writers", "non_writers"]},
-                    "temporal_context": {
-                        "type": "string",
-                        "enum": ["past", "future", "experiment", "problem"],
-                    },
+                    "text": {"type": "string"},
+                    "type": {"type": "string"},
+                    "based_on": {"type": "string"},
+                    "source": {"type": "string"},
+                    "temporal_context": {"type": "string"},
                     "temporal_order": {"type": "number"},
-                    "action_type": {
-                        "type": "string",
-                        "enum": ["author_action", "reaction"],
-                    },
                     "pivot": {"type": "boolean"},
-                    "rhetorical_action": {
-                        "type": "string",
-                        "enum": [
-                            "argue",
-                            "support_by_evidence",
-                            "support_by_citation",
-                            "describe",
-                            "bring_contra",
-                            "dismiss_contra",
-                            "conclude",
-                            "describe_other_works",
-                            "bring_hypothesis",
-                            "bring_theory",
-                            "underline",
-                            "step_back",
-                            "compare",
-                            "critique",
-                            "justify",
-                            "clarify",
-                            "synthesize",
-                            "question",
-                            "propose",
-                        ],
-                    },
-                    "hierarchy": {"type": "string"},
                 },
-                "required": [
-                    "id",
-                    "text",
-                    "type",
-                    "based_on",
-                    "source",
-                    "temporal_context",
-                    "temporal_order",
-                    "action_type",
-                    "pivot",
-                    "rhetorical_action",
-                    "hierarchy",
-                ],
+                "required": ["id", "text", "type", "source"],
             },
         },
-        "experiment_results": {
+        "results": {
             "type": "array",
-            "description": "All experimental results reported",
             "items": {
                 "type": "object",
                 "properties": {
                     "id": {"type": "integer"},
-                    "text": {
-                        "type": "string",
-                        "description": "The complete result description",
-                    },
-                    "experiment": {
-                        "type": "string",
-                        "description": "What experiment produced this result",
-                    },
-                    "outcome": {
-                        "type": "string",
-                        "description": "The specific outcome or finding",
-                    },
-                    "significance": {
-                        "type": "string",
-                        "description": "Statistical significance if mentioned",
-                    },
-                    "source": {"type": "string", "enum": ["writers", "non_writers"]},
-                    "temporal_context": {
-                        "type": "string",
-                        "enum": ["past", "future", "experiment", "problem"],
-                    },
+                    "text": {"type": "string"},
+                    "experiment": {"type": "string"},
+                    "outcome": {"type": "string"},
+                    "source": {"type": "string"},
+                    "temporal_context": {"type": "string"},
                     "temporal_order": {"type": "number"},
-                    "action_type": {
-                        "type": "string",
-                        "enum": ["author_action", "reaction"],
-                    },
                     "pivot": {"type": "boolean"},
-                    "rhetorical_action": {
-                        "type": "string",
-                        "enum": [
-                            "argue",
-                            "support_by_evidence",
-                            "support_by_citation",
-                            "describe",
-                            "bring_contra",
-                            "dismiss_contra",
-                            "conclude",
-                            "describe_other_works",
-                            "bring_hypothesis",
-                            "bring_theory",
-                            "underline",
-                            "step_back",
-                            "compare",
-                            "critique",
-                            "justify",
-                            "clarify",
-                            "synthesize",
-                            "question",
-                            "propose",
-                        ],
-                    },
-                    "hierarchy": {"type": "string"},
                 },
-                "required": [
-                    "id",
-                    "text",
-                    "experiment",
-                    "outcome",
-                    "source",
-                    "temporal_context",
-                    "temporal_order",
-                    "action_type",
-                    "pivot",
-                    "rhetorical_action",
-                    "hierarchy",
-                ],
+                "required": ["id", "text", "experiment", "source"],
             },
         },
-        "sources": {
-            "type": "array",
-            "description": "All sources and citations mentioned",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "id": {"type": "integer"},
-                    "text": {
-                        "type": "string",
-                        "description": "Full reference or citation as mentioned",
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": ["citation", "dataset", "method", "other"],
-                    },
-                    "relevance": {
-                        "type": "string",
-                        "description": "Why this source is referenced",
-                    },
-                },
-                "required": ["id", "text", "type", "relevance"],
-            },
-        },
+    },
+    "required": ["arguments", "evidence", "hypotheses", "conclusions", "results"],
+}
+
+plan_schema: Final[dict[str, Any]] = {
+    "type": "object",
+    "properties": {
         "objectives": {
             "type": "array",
-            "description": "Research objectives or goals stated in the article",
             "items": {
                 "type": "object",
                 "properties": {
                     "id": {"type": "integer"},
-                    "text": {
-                        "type": "string",
-                        "description": "The complete objective statement",
-                    },
-                    "scope": {
-                        "type": "string",
-                        "description": "The scope or boundaries of this objective",
-                    },
-                    "expected_outcome": {
-                        "type": "string",
-                        "description": "What achieving this objective will produce",
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": ["primary", "secondary", "enabling"],
-                    },
-                    "temporal_context": {
-                        "type": "string",
-                        "enum": ["future"],
-                        "description": "Always future for objectives",
-                    },
-                    "temporal_order": {
-                        "type": "number",
-                        "description": "1.0-1.5 for near-term, 1.5-2.0 for long-term",
-                    },
-                    "hierarchy": {
-                        "type": "string",
-                        "description": "Hierarchical notation (e.g., O1, O2, O1.1)",
-                    },
+                    "text": {"type": "string"},
+                    "type": {"type": "string"},
+                    "hierarchy": {"type": "string"},
+                    "temporal_context": {"type": "string"},
+                    "temporal_order": {"type": "number"},
                 },
-                "required": [
-                    "id",
-                    "text",
-                    "scope",
-                    "expected_outcome",
-                    "type",
-                    "temporal_context",
-                    "temporal_order",
-                    "hierarchy",
-                ],
+                "required": ["id", "text", "type", "hierarchy"],
             },
         },
         "tasks": {
             "type": "array",
-            "description": "Specific tasks required to achieve objectives",
             "items": {
                 "type": "object",
                 "properties": {
                     "id": {"type": "integer"},
-                    "text": {
-                        "type": "string",
-                        "description": "The complete task description",
-                    },
-                    "action": {
-                        "type": "string",
-                        "description": "The specific action to be performed",
-                    },
-                    "deliverable": {
-                        "type": "string",
-                        "description": "What this task will produce or deliver",
-                    },
-                    "supports_objective": {
-                        "type": "integer",
-                        "description": "ID of the objective this task supports",
-                    },
-                    "depends_on": {
-                        "type": "array",
-                        "items": {"type": "integer"},
-                        "description": "IDs of tasks that must complete before this task can begin",
-                    },
-                    "temporal_context": {
-                        "type": "string",
-                        "enum": ["future"],
-                        "description": "Always future for tasks",
-                    },
-                    "temporal_order": {
-                        "type": "number",
-                        "description": "1.0-1.5 for near-term, 1.5-2.0 for long-term",
-                    },
-                    "hierarchy": {
-                        "type": "string",
-                        "description": "Hierarchical notation (e.g., T1, T2, T1.1)",
-                    },
+                    "text": {"type": "string"},
+                    "supports_objective": {"type": "integer"},
+                    "depends_on": {"type": "array", "items": {"type": "integer"}},
+                    "hierarchy": {"type": "string"},
+                    "temporal_context": {"type": "string"},
+                    "temporal_order": {"type": "number"},
                 },
-                "required": [
-                    "id",
-                    "text",
-                    "action",
-                    "deliverable",
-                    "supports_objective",
-                    "depends_on",
-                    "temporal_context",
-                    "temporal_order",
-                    "hierarchy",
-                ],
+                "required": ["id", "text", "supports_objective", "hierarchy"],
             },
         },
-        "metadata": {
+        "sources": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "integer"},
+                    "text": {"type": "string"},
+                    "type": {"type": "string"},
+                    "relevance": {"type": "string"},
+                },
+                "required": ["id", "text", "type"],
+            },
+        },
+        "meta": {
             "type": "object",
-            "description": "Summary metadata about the extraction",
             "properties": {
                 "total_arguments": {"type": "integer"},
                 "total_evidence": {"type": "integer"},
@@ -628,16 +334,7 @@ scientific_analysis_schema: Final[dict[str, object]] = {
                 "total_sources": {"type": "integer"},
                 "total_objectives": {"type": "integer"},
                 "total_tasks": {"type": "integer"},
-                "article_type": {
-                    "type": "string",
-                    "enum": [
-                        "research",
-                        "review",
-                        "meta-analysis",
-                        "case_study",
-                        "other",
-                    ],
-                },
+                "article_type": {"type": "string"},
             },
             "required": [
                 "total_arguments",
@@ -652,107 +349,35 @@ scientific_analysis_schema: Final[dict[str, object]] = {
             ],
         },
     },
-    "required": [
-        "arguments",
-        "evidence",
-        "hypotheses",
-        "conclusions",
-        "experiment_results",
-        "sources",
-        "objectives",
-        "tasks",
-        "metadata",
-    ],
+    "required": ["objectives", "tasks", "sources", "meta"],
 }
 
 
+async def _run_core_extraction(article_content: str, trace_id: str) -> CorePayload:
+    prompt = CORE_USER_PROMPT.format(article_content=article_content)
+    return await _generate_structured_response(
+        prompt_identifier="scientific_analysis_core",
+        system_prompt=CORE_SYSTEM_PROMPT,
+        user_prompt=prompt,
+        response_schema=core_schema,
+        response_type=CorePayload,
+        trace_id=trace_id,
+    )
+
+
+async def _run_plan_extraction(article_content: str, trace_id: str) -> PlanPayload:
+    prompt = PLAN_USER_PROMPT.format(article_content=article_content)
+    return await _generate_structured_response(
+        prompt_identifier="scientific_analysis_plan",
+        system_prompt=PLAN_SYSTEM_PROMPT,
+        user_prompt=prompt,
+        response_schema=plan_schema,
+        response_type=PlanPayload,
+        trace_id=trace_id,
+    )
+
+
 def validate_scientific_analysis(result: ScientificAnalysisResult) -> None:
-    """Validate the scientific analysis result for completeness and consistency."""
-    required_keys = [
-        "arguments",
-        "evidence",
-        "hypotheses",
-        "conclusions",
-        "experiment_results",
-        "sources",
-        "objectives",
-        "tasks",
-        "metadata",
-    ]
-    for key in required_keys:
-        if key not in result:
-            raise ValidationError(
-                f"Missing required key: {key}",
-                context={"result_keys": list(result.keys())},
-            )
-
-    metadata = result["metadata"]
-    if metadata["total_arguments"] != len(result["arguments"]):
-        raise ValidationError(
-            "Metadata count mismatch for arguments",
-            context={
-                "metadata_count": metadata["total_arguments"],
-                "actual_count": len(result["arguments"]),
-            },
-        )
-    if metadata["total_evidence"] != len(result["evidence"]):
-        raise ValidationError(
-            "Metadata count mismatch for evidence",
-            context={
-                "metadata_count": metadata["total_evidence"],
-                "actual_count": len(result["evidence"]),
-            },
-        )
-    if metadata["total_hypotheses"] != len(result["hypotheses"]):
-        raise ValidationError(
-            "Metadata count mismatch for hypotheses",
-            context={
-                "metadata_count": metadata["total_hypotheses"],
-                "actual_count": len(result["hypotheses"]),
-            },
-        )
-    if metadata["total_conclusions"] != len(result["conclusions"]):
-        raise ValidationError(
-            "Metadata count mismatch for conclusions",
-            context={
-                "metadata_count": metadata["total_conclusions"],
-                "actual_count": len(result["conclusions"]),
-            },
-        )
-    if metadata["total_results"] != len(result["experiment_results"]):
-        raise ValidationError(
-            "Metadata count mismatch for experiment_results",
-            context={
-                "metadata_count": metadata["total_results"],
-                "actual_count": len(result["experiment_results"]),
-            },
-        )
-    if metadata["total_sources"] != len(result["sources"]):
-        raise ValidationError(
-            "Metadata count mismatch for sources",
-            context={
-                "metadata_count": metadata["total_sources"],
-                "actual_count": len(result["sources"]),
-            },
-        )
-    if metadata["total_objectives"] != len(result["objectives"]):
-        raise ValidationError(
-            "Metadata count mismatch for objectives",
-            context={
-                "metadata_count": metadata["total_objectives"],
-                "actual_count": len(result["objectives"]),
-            },
-        )
-    if metadata["total_tasks"] != len(result["tasks"]):
-        raise ValidationError(
-            "Metadata count mismatch for tasks",
-            context={
-                "metadata_count": metadata["total_tasks"],
-                "actual_count": len(result["tasks"]),
-            },
-        )
-
-    # Validate task dependencies reference valid task IDs
     task_ids = {task["id"] for task in result["tasks"]}
     for task in result["tasks"]:
         for dep_id in task.get("depends_on", []):
@@ -766,7 +391,6 @@ def validate_scientific_analysis(result: ScientificAnalysisResult) -> None:
                     },
                 )
 
-    # Validate task objective references
     objective_ids = {obj["id"] for obj in result["objectives"]}
     for task in result["tasks"]:
         if task["supports_objective"] not in objective_ids:
@@ -779,36 +403,10 @@ def validate_scientific_analysis(result: ScientificAnalysisResult) -> None:
                 },
             )
 
-    # Validate pivot count - should typically have 0-3 pivots
-    pivot_count = (
-        sum(1 for item in result["arguments"] if item.get("pivot", False))
-        + sum(1 for item in result["evidence"] if item.get("pivot", False))
-        + sum(1 for item in result["hypotheses"] if item.get("pivot", False))
-        + sum(1 for item in result["conclusions"] if item.get("pivot", False))
-        + sum(1 for item in result["experiment_results"] if item.get("pivot", False))
-    )
-
-    if pivot_count > 5:
-        logger.warning(
-            "High pivot count detected - pivots should be rare",
-            pivot_count=pivot_count,
-        )
-
 
 def aggregate_analyses(
     analyses: list[ScientificAnalysisResult],
 ) -> ScientificAnalysisResult:
-    """Aggregate multiple scientific analyses into a single combined result.
-
-    This function merges analyses from multiple source documents into one,
-    combining all elements while maintaining unique IDs and recalculating totals.
-
-    Args:
-        analyses: List of ScientificAnalysisResult from individual documents
-
-    Returns:
-        A combined ScientificAnalysisResult with all elements merged
-    """
     if not analyses:
         return ScientificAnalysisResult(
             arguments=[],
@@ -832,7 +430,6 @@ def aggregate_analyses(
             ),
         )
 
-    # Merge all elements with ID offsetting to avoid collisions
     all_arguments: list[ArgumentElement] = []
     all_evidence: list[EvidenceElement] = []
     all_hypotheses: list[HypothesisElement] = []
@@ -846,42 +443,35 @@ def aggregate_analyses(
     for analysis in analyses:
         max_id = 0
 
-        for arg in analysis["arguments"]:
-            new_arg = cast("ArgumentElement", {**arg, "id": arg["id"] + id_offset})
-            all_arguments.append(new_arg)
-            max_id = max(max_id, arg["id"])
+        new_args, arg_max = _offset_elements(analysis["arguments"], id_offset)
+        all_arguments.extend(new_args)
+        max_id = max(max_id, arg_max)
 
-        for ev in analysis["evidence"]:
-            new_ev = cast("EvidenceElement", {**ev, "id": ev["id"] + id_offset})
-            all_evidence.append(new_ev)
-            max_id = max(max_id, ev["id"])
+        new_evs, ev_max = _offset_elements(analysis["evidence"], id_offset)
+        all_evidence.extend(new_evs)
+        max_id = max(max_id, ev_max)
 
-        for hyp in analysis["hypotheses"]:
-            new_hyp = cast("HypothesisElement", {**hyp, "id": hyp["id"] + id_offset})
-            all_hypotheses.append(new_hyp)
-            max_id = max(max_id, hyp["id"])
+        new_hyps, hyp_max = _offset_elements(analysis["hypotheses"], id_offset)
+        all_hypotheses.extend(new_hyps)
+        max_id = max(max_id, hyp_max)
 
-        for conc in analysis["conclusions"]:
-            new_conc = cast("ConclusionElement", {**conc, "id": conc["id"] + id_offset})
-            all_conclusions.append(new_conc)
-            max_id = max(max_id, conc["id"])
+        new_concs, conc_max = _offset_elements(analysis["conclusions"], id_offset)
+        all_conclusions.extend(new_concs)
+        max_id = max(max_id, conc_max)
 
-        for res in analysis["experiment_results"]:
-            new_res = cast(
-                "ExperimentResultElement", {**res, "id": res["id"] + id_offset}
-            )
-            all_experiment_results.append(new_res)
-            max_id = max(max_id, res["id"])
+        new_results, res_max = _offset_elements(
+            analysis["experiment_results"], id_offset
+        )
+        all_experiment_results.extend(new_results)
+        max_id = max(max_id, res_max)
 
-        for src in analysis["sources"]:
-            new_src = cast("SourceElement", {**src, "id": src["id"] + id_offset})
-            all_sources.append(new_src)
-            max_id = max(max_id, src["id"])
+        new_srcs, src_max = _offset_elements(analysis["sources"], id_offset)
+        all_sources.extend(new_srcs)
+        max_id = max(max_id, src_max)
 
-        for obj in analysis["objectives"]:
-            new_obj = cast("ObjectiveElement", {**obj, "id": obj["id"] + id_offset})
-            all_objectives.append(new_obj)
-            max_id = max(max_id, obj["id"])
+        new_objs, obj_max = _offset_elements(analysis["objectives"], id_offset)
+        all_objectives.extend(new_objs)
+        max_id = max(max_id, obj_max)
 
         for task in analysis["tasks"]:
             new_task = cast(
@@ -929,108 +519,30 @@ async def analyze_scientific_content(
     article_content: str,
     *,
     source_id: str,
-    timeout: float = 300,
 ) -> ScientificAnalysisResult:
-    """Analyze scientific content and extract structured elements.
-
-    Args:
-        article_content: The full text content of the scientific article
-        source_id: The source ID for logging/tracing
-        timeout: Request timeout in seconds
-
-    Returns:
-        ScientificAnalysisResult with all extracted elements
-    """
-    client = get_google_ai_client()
-
-    user_prompt = SCIENTIFIC_ANALYSIS_USER_PROMPT.format(
-        article_content=article_content
+    core = await _run_core_extraction(
+        article_content=article_content, trace_id=source_id
+    )
+    plan = await _run_plan_extraction(
+        article_content=article_content, trace_id=source_id
     )
 
-    safety_settings = [
-        genai.types.SafetySetting(
-            category=genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-            threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
-        ),
-        genai.types.SafetySetting(
-            category=genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-            threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
-        ),
-        genai.types.SafetySetting(
-            category=genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT,
-            threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
-        ),
-        genai.types.SafetySetting(
-            category=genai.types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-            threshold=genai.types.HarmBlockThreshold.BLOCK_NONE,
-        ),
-    ]
-
-    thinking_config = genai.types.ThinkingConfig(
-        thinking_budget=SCIENTIFIC_ANALYSIS_THINKING_BUDGET
+    result = ScientificAnalysisResult(
+        arguments=core["arguments"],
+        evidence=core["evidence"],
+        hypotheses=core["hypotheses"],
+        conclusions=core["conclusions"],
+        experiment_results=core["results"],
+        sources=plan["sources"],
+        objectives=plan["objectives"],
+        tasks=plan["tasks"],
+        metadata=plan["meta"],
     )
-
-    config = genai.types.GenerateContentConfig(
-        response_mime_type=CONTENT_TYPE_JSON,
-        response_schema=scientific_analysis_schema,
-        temperature=0,
-        max_output_tokens=65536,
-        system_instruction=SCIENTIFIC_ANALYSIS_SYSTEM_PROMPT,
-        safety_settings=safety_settings,
-        thinking_config=thinking_config,
-    )
-
-    logger.info(
-        "Starting scientific content analysis",
-        source_id=source_id,
-        content_length=len(article_content),
-        thinking_budget=SCIENTIFIC_ANALYSIS_THINKING_BUDGET,
-    )
-
-    start_time = datetime.now(UTC)
-
-    try:
-        async with asyncio.timeout(timeout):
-            response = await client._aio.models.generate_content(  # noqa: SLF001
-                model=GEMINI_FLASH_MODEL,
-                contents=user_prompt,
-                config=config,
-            )
-    except TimeoutError:
-        elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
-        logger.error(
-            "Scientific analysis timed out",
-            source_id=source_id,
-            timeout_seconds=timeout,
-            elapsed_ms=elapsed_ms,
-        )
-        raise
-
-    elapsed_ms = (datetime.now(UTC) - start_time).total_seconds() * 1000
-
-    usage_metadata = getattr(response, "usage_metadata", None)
-    if usage_metadata:
-        logger.info(
-            "Scientific analysis completed",
-            source_id=source_id,
-            elapsed_ms=round(elapsed_ms, 2),
-            prompt_tokens=getattr(usage_metadata, "prompt_token_count", None),
-            completion_tokens=getattr(usage_metadata, "candidates_token_count", None),
-            total_tokens=getattr(usage_metadata, "total_token_count", None),
-        )
-    else:
-        logger.info(
-            "Scientific analysis completed",
-            source_id=source_id,
-            elapsed_ms=round(elapsed_ms, 2),
-        )
-
-    result = deserialize(response.text or "", ScientificAnalysisResult)
 
     validate_scientific_analysis(result)
 
     logger.info(
-        "Scientific analysis extracted elements",
+        "Scientific analysis completed",
         source_id=source_id,
         arguments=len(result["arguments"]),
         evidence=len(result["evidence"]),
