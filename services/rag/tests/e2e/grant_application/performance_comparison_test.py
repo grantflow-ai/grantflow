@@ -1,5 +1,6 @@
 import logging
 import time
+from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
 
@@ -8,6 +9,9 @@ from packages.db.src.tables import GrantApplication
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.performance_framework import PerformanceTestContext, TestDomain, TestExecutionSpeed, performance_test
 from testing.scenarios.base import load_scenario
+
+TEST_DATA_DIR = Path(__file__).parent.parent.parent.parent.parent / "testing/test_data/sources/cfps"
+MRA_FILE = TEST_DATA_DIR / "MRA-2023-2024-RFP-Final.pdf"
 
 
 def create_mock_job_manager() -> AsyncMock:
@@ -117,6 +121,7 @@ async def test_application_generation_performance_baseline(
     )
 
 
+@pytest.mark.skipif(not MRA_FILE.exists(), reason="Test data file not available in CI")
 @performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.GRANT_APPLICATION, timeout=120)
 @pytest.mark.e2e
 async def test_generation_smoke_test(

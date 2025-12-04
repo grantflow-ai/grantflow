@@ -1,9 +1,11 @@
 import logging
 import time
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+import pytest
 from packages.db.src.tables import GrantApplication
 from packages.db.src.utils import retrieve_application
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -24,7 +26,11 @@ from services.rag.src.utils.retrieval import retrieve_documents
 from services.rag.src.utils.search_queries import handle_create_search_queries
 from services.rag.tests.e2e.utils_test import create_rag_sources_from_cfp_file
 
+TEST_DATA_DIR = Path(__file__).parent.parent.parent.parent / "testing/test_data/sources/cfps"
+MRA_FILE = TEST_DATA_DIR / "MRA-2023-2024-RFP-Final.pdf"
 
+
+@pytest.mark.skipif(not MRA_FILE.exists(), reason="Test data file not available in CI")
 @performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.RETRIEVAL, timeout=180)
 async def test_retrieval_smoke(
     logger: logging.Logger,

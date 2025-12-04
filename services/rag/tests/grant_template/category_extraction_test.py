@@ -320,13 +320,18 @@ async def test_nlp_categorizer_quality_benchmark(logger: Any) -> None:
     assert total_sentences >= 20, f"Too few sentences categorized: {total_sentences}"
 
 
+@pytest.mark.skipif(
+    not (
+        TEST_DATA_DIR
+        / "PAR-25-450_ Clinical Trial Readiness for Rare Diseases, Disorders, and Syndromes (R21 Clinical Trial Not Allowed).pdf"
+    ).exists(),
+    reason="Test data file not available in CI",
+)
 async def test_categorize_real_cfp_nih_par_25_450() -> None:
     cfp_path = (
         TEST_DATA_DIR
         / "PAR-25-450_ Clinical Trial Readiness for Rare Diseases, Disorders, and Syndromes (R21 Clinical Trial Not Allowed).pdf"
     )
-
-    assert cfp_path.exists(), f"CFP file not found: {cfp_path}"
 
     parsed = await extract_file(cfp_path)
     cfp_text = parsed.content
@@ -359,10 +364,12 @@ async def test_categorize_real_cfp_nih_par_25_450() -> None:
     assert "money" not in formatted_hints
 
 
+@pytest.mark.skipif(
+    not (TEST_DATA_DIR / "MRA-2023-2024-RFP-Final.pdf").exists(),
+    reason="Test data file not available in CI",
+)
 async def test_categorize_real_cfp_mra() -> None:
     cfp_path = TEST_DATA_DIR / "MRA-2023-2024-RFP-Final.pdf"
-
-    assert cfp_path.exists(), f"CFP file not found: {cfp_path}"
 
     parsed = await extract_file(cfp_path)
     cfp_text = parsed.content
@@ -395,10 +402,12 @@ async def test_categorize_real_cfp_mra() -> None:
     assert "money" not in formatted_hints
 
 
+@pytest.mark.skipif(
+    not (TEST_DATA_DIR / "israeli_chief_scientist_cfp.html").exists(),
+    reason="Test data file not available in CI",
+)
 async def test_categorize_real_cfp_israeli_chief_scientist() -> None:
     cfp_path = TEST_DATA_DIR / "israeli_chief_scientist_cfp.html"
-
-    assert cfp_path.exists(), f"CFP file not found: {cfp_path}"
 
     parsed = await extract_file(cfp_path)
     cfp_text = parsed.content

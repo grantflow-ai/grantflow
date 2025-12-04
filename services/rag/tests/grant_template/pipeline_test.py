@@ -3,9 +3,10 @@ from typing import Any
 
 import pytest
 from packages.db.src.enums import GrantTemplateStageEnum, RagGenerationStatusEnum
-from packages.db.src.tables import GrantTemplate, RagGenerationJob
+from packages.db.src.tables import GrantTemplate, PredefinedGrantTemplate, RagGenerationJob
 from packages.shared_utils.src.exceptions import BackendError
 from pytest_mock import MockerFixture
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from testing.factories import PredefinedGrantTemplateFactory
 
@@ -233,6 +234,12 @@ async def test_handle_grant_template_pipeline_clones_predefined_based_on_activit
         pytest.skip("grant_template fixture missing granting institution")
 
     async with async_session_maker() as session:
+        await session.execute(
+            delete(PredefinedGrantTemplate).where(
+                PredefinedGrantTemplate.granting_institution_id == grant_template.granting_institution_id,
+                PredefinedGrantTemplate.activity_code == "R21",
+            )
+        )
         predefined = PredefinedGrantTemplateFactory.build(
             granting_institution_id=grant_template.granting_institution_id,
             activity_code="R21",
