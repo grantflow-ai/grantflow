@@ -1,0 +1,24 @@
+name: "Build Crawler"
+
+on:
+  push:
+    branches:
+      - main
+      - development
+    paths:
+      - "services/crawler/**"
+      - "packages/db/**"
+      - "packages/shared_utils/**"
+      - ".github/workflows/build-crawler.yaml"
+      - ".github/actions/build-service/**"
+
+jobs:
+  build:
+    name: Build Crawler
+    uses: ./.github/workflows/build-service.yaml
+    with:
+      service: crawler
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit

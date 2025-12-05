@@ -1,0 +1,24 @@
+name: "Build Scraper"
+
+on:
+  push:
+    branches:
+      - main
+      - development
+    paths:
+      - "services/scraper/**"
+      - "packages/db/**"
+      - "packages/shared_utils/**"
+      - ".github/workflows/build-scraper.yaml"
+      - ".github/actions/build-service/**"
+
+jobs:
+  build:
+    name: Build Scraper
+    uses: ./.github/workflows/build-service.yaml
+    with:
+      service: scraper
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
