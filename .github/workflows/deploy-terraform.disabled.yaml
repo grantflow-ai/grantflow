@@ -438,7 +438,7 @@ jobs:
           tofu init -upgrade
 
       - name: Download Plan
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: terraform-plan-${{ env.ENVIRONMENT }}-${{ github.sha }}
           path: terraform/environments/${{ env.ENVIRONMENT }}
