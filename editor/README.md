@@ -2,6 +2,12 @@
 
 Rich text editor component built with Vite, React, TypeScript, and TipTap.
 
+## Getting Started
+
+For prerequisites, environment setup, and general development workflow, see the [Contributing Guide](../CONTRIBUTING.md).
+
+This README covers editor-specific architecture and development details.
+
 ## Overview
 
 The editor is a standalone React application that provides rich text editing capabilities for GrantFlow applications. It's built using modern tools and integrated into the GrantFlow workspace.

@@ -2,6 +2,12 @@
 
 Automated grant opportunity discovery service that retrieves funding opportunities from NIH and grants.gov, enriches them with eligibility and funding information, and stores them in PostgreSQL.
 
+## Getting Started
+
+For prerequisites, environment setup, and general development workflow, see the [Contributing Guide](../../CONTRIBUTING.md).
+
+This README covers scraper service-specific architecture and development details.
+
 ## Service Structure
 
 ```

@@ -1,5 +1,11 @@
 # RAG Service
 
+## Getting Started
+
+For prerequisites, environment setup, and general development workflow, see the [Contributing Guide](../../CONTRIBUTING.md).
+
+This README covers RAG service-specific architecture and development details.
+
 ## Introduction
 
 The RAG (Retrieval-Augmented Generation) service processes grant documents to extract structured templates and generates complete grant applications using LLMs with retrieval from indexed documents. The service integrates Wikidata-enhanced scientific context to improve the quality and scientific accuracy of generated applications.

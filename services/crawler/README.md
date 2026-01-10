@@ -2,6 +2,12 @@
 
 Web crawling service for extracting grant-related documents from URLs. The service listens to Pub/Sub messages, crawls web pages recursively with depth limiting and relevance filtering, extracts content and metadata using AI-powered extraction, and publishes indexed content for downstream RAG processing.
 
+## Getting Started
+
+For prerequisites, environment setup, and general development workflow, see the [Contributing Guide](../../CONTRIBUTING.md).
+
+This README covers crawler service-specific architecture and development details.
+
 ## Service Structure
 
 ```

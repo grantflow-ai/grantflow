@@ -2,6 +2,12 @@
 
 Central REST API gateway for the GrantFlow.AI platform, providing Firebase authentication, multi-tenant organization management, and Pub/Sub orchestration of the document processing pipeline.
 
+## Getting Started
+
+For prerequisites, environment setup, and general development workflow, see the [Contributing Guide](../../CONTRIBUTING.md).
+
+This README covers backend service-specific architecture and development details.
+
 ## Introduction
 
 The backend service is the primary API gateway that coordinates all platform operations:

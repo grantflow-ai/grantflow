@@ -2,6 +2,12 @@
 
 Shared database layer providing SQLAlchemy models, Alembic migrations, and query helpers for all GrantFlow.AI services. This package implements a PostgreSQL-based multi-tenant architecture with soft-delete patterns, vector embeddings for RAG operations, and comprehensive relationship management.
 
+## Getting Started
+
+For prerequisites, environment setup, and general development workflow, see the [Contributing Guide](../../CONTRIBUTING.md).
+
+This README covers db package-specific architecture and development details.
+
 ## Package Structure
 
 ```

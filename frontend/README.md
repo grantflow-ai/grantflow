@@ -2,6 +2,12 @@
 
 This is the main frontend application for GrantFlow.AI, built with Next.js 15, TypeScript, and shadcn/ui components.
 
+## Getting Started
+
+For prerequisites, environment setup, and general development workflow, see the [Contributing Guide](../CONTRIBUTING.md).
+
+This README covers frontend-specific architecture and development details.
+
 ## Workspace Structure
 
 GrantFlow uses a monorepo with two frontend applications:

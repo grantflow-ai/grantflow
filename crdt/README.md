@@ -2,6 +2,12 @@
 
 WebSocket CRDT server for GrantFlow collaborative editing. It provides real-time collaborative document editing capabilities using Hocuspocus and Y.js, with automatic conflict resolution and persistence to PostgreSQL.
 
+## Getting Started
+
+For prerequisites, environment setup, and general development workflow, see the [Contributing Guide](../CONTRIBUTING.md).
+
+This README covers CRDT server-specific architecture and development details.
+
 ## Tech Stack
 
 - **Framework**: Node.js + TypeScript

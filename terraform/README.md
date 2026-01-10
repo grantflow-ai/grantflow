@@ -51,28 +51,88 @@ terraform/
 
 ## Prerequisites
 
-- [OpenTofu](https://opentofu.org/) installed
+- [OpenTofu](https://opentofu.org/) installed (version latest recommended)
 - GCP credentials configured via `gcloud auth application-default login`
 - Appropriate permissions in the GCP project
+- (Optional) Remote state bucket for team deployments: `gs://grantflow-terraform-state`
 
 ## Usage
 
-### Staging Environment
+### Automated CI Validation (GitHub Actions)
+
+The repository includes CI workflows that validate Terraform configuration on every pull request and push:
+
+- **Syntax Validation**: `tofu fmt -check`
+- **Configuration Validation**: `tofu validate`
+- **Best Practices**: TFLint checks
+
+These workflows do NOT deploy - they only validate. See `.github/workflows/README.md` for more information.
+
+### Manual Deployment
+
+#### Prerequisites for Manual Deployment
+
+1. **Install OpenTofu**:
+   ```bash
+   # macOS
+   brew install opentofu
+
+   # Linux
+   curl --proto '=https' --tlsv1.2 -fsSL https://get.opentofu.org/opentofu.gpg | sudo tee /etc/apt/trusted.gpg.d/opentofu.gpg > /dev/null
+   curl --proto '=https' --tlsv1.2 -fsSL https://releases.opentofu.org/opentofu/tofu-repo.deb | sudo tee /etc/apt/sources.list.d/opentofu.sources.list > /dev/null
+   sudo apt-get update
+   sudo apt-get install tofu
+   ```
+
+2. **Authenticate to GCP**:
+   ```bash
+   gcloud auth application-default login
+   gcloud config set project PROJECT_ID
+   ```
+
+3. **Ensure state bucket exists** (if using remote state):
+   ```bash
+   gsutil mb -p PROJECT_ID gs://grantflow-terraform-state
+   gsutil versioning set on gs://grantflow-terraform-state
+   ```
+
+#### Staging Environment Deployment
 
 ```bash
-cd environments/staging
-tofu init
+cd terraform/environments/staging
+
+# Initialize with remote state backend
+tofu init \
+  -backend-config="bucket=grantflow-terraform-state" \
+  -backend-config="prefix=staging"
+
+# Preview changes
 tofu plan -out=tfplan
+
+# Review the plan output carefully
+# Apply changes
 tofu apply tfplan
 ```
 
-### Production Environment
+#### Production Environment Deployment
 
 ```bash
-cd environments/production
-tofu init
+cd terraform/environments/production
+
+# Initialize with remote state backend
+tofu init \
+  -backend-config="bucket=grantflow-terraform-state" \
+  -backend-config="prefix=production"
+
+# Preview changes (production should be extra cautious)
 tofu plan -out=tfplan
+
+# Review the plan output VERY carefully
+# Consider using -auto-approve=false for manual review at each step
 tofu apply tfplan
+
+# Verify changes
+tofu show
 ```
 
 ### Working with Modules Directly (Development Only)
@@ -175,12 +235,86 @@ All configuration is managed through the `terraform/modules/app_hosting/` module
 3. Run `tofu plan` to verify the changes
 4. Run `tofu apply` to apply the changes
 
+## Self-Hosting Guide
+
+If you're self-hosting GrantFlow, this section provides guidance on adapting the Terraform configuration for your environment.
+
+### Overview
+
+The GrantFlow infrastructure is designed to run on Google Cloud Platform (GCP) using Cloud Run, Cloud SQL, and other GCP services. For self-hosting, you have two options:
+
+1. **Migrate to GCP** (recommended for cloud-native deployments): Follow the standard deployment instructions above
+2. **Adapt to your infrastructure**: Modify the Terraform modules to target your preferred platform (Docker Compose, Kubernetes, VPS, etc.)
+
+### Adapting to Your Infrastructure
+
+The Terraform modules are organized to be portable:
+
+```
+terraform/
+├── modules/              # Platform-agnostic infrastructure definitions
+│   ├── cloud_run/       # Convert to Docker/K8s deployments
+│   ├── database/        # Convert to PostgreSQL on your platform
+│   ├── iam/            # Convert to your auth system
+│   ├── monitoring/      # Convert to your monitoring stack
+│   ├── network/        # Convert to your networking
+│   ├── pubsub/         # Convert to your message queue (RabbitMQ, etc.)
+│   ├── scheduler/      # Convert to your job scheduler
+│   ├── secrets/        # Convert to your secrets manager
+│   └── storage/        # Convert to your blob storage
+└── environments/        # Environment-specific values
+```
+
+### Example: Docker Compose Migration
+
+1. **Review GCP service requirements** in the modules
+2. **Create Docker Compose equivalents**:
+   - `cloud_run/` → Docker services
+   - `database/` → PostgreSQL service
+   - `pubsub/` → RabbitMQ or similar
+   - `secrets/` → Environment file or secrets management
+3. **Use environment variables** from `terraform.tfvars`
+4. **Document your setup** in a new `SELF_HOSTING.md`
+
+### Key Configuration Points
+
+When adapting the infrastructure, pay attention to:
+
+- **Port Numbers**: Services use port 8000 (except frontend on 3000)
+- **Health Checks**: Defined in modules, may need adjustment
+- **Environment Variables**: Stored in Secret Manager, map to your secrets system
+- **Database**: PostgreSQL 15+ with pgvector extension
+- **Service Dependencies**: See module documentation for required APIs/services
+- **Monitoring**: Configure logging and metrics for your platform
+- **State Management**: If not using GCS, modify backend configuration
+
+### Self-Hosting Checklist
+
+- [ ] Choose your infrastructure platform (Docker Compose, Kubernetes, VPS, etc.)
+- [ ] Install and configure required services (PostgreSQL, Redis, etc.)
+- [ ] Adapt Terraform modules for your platform or create Docker Compose configs
+- [ ] Set up secrets management (environment files, vault, etc.)
+- [ ] Configure networking and reverse proxy (Nginx, Traefik, etc.)
+- [ ] Set up monitoring and logging (Prometheus, ELK, etc.)
+- [ ] Test deployment in staging environment first
+- [ ] Document your setup for future maintainers
+- [ ] Set up automated backups for databases
+- [ ] Configure SSL/TLS certificates
+
+### Community Resources
+
+For deployment examples and discussions:
+- Check GitHub Discussions for self-hosting setups
+- See `.github/workflows/README.md` for CI/validation workflows
+- Reference the existing modules for configuration requirements
+
 ## Contributing
 
 1. Create a feature branch from `main`
 2. Make your changes
 3. Test with `tofu plan`
 4. Submit a pull request
+5. If adding new infrastructure, update this README with self-hosting guidance
 
 ## Notes
 
@@ -188,3 +322,4 @@ All configuration is managed through the `terraform/modules/app_hosting/` module
 - Required Google Cloud APIs must be enabled before applying
 - All Cloud Run services have resource limits defined for CPU and memory
 - Scaling parameters are configured for each service
+- For self-hosting, adapt these configurations to your platform's requirements

@@ -1,7 +1,171 @@
-# GrantFlow.AI Monorepo
+# GrantFlow.AI
 
-This monorepo contains both the frontend and backend code for the GrantFlow.AI platform. The frontend is built using
-Next.js 15, and the backend is a microservice-based Python architecture.
+Intelligent grant management platform that automates discovery, planning, and application workflows for researchers and institutions.
+
+## What is GrantFlow.AI?
+
+GrantFlow.AI is a comprehensive platform designed to streamline the grant management process. Researchers and institutions can discover relevant grant opportunities, organize collaborative planning, and generate high-quality grant applications—all in one place.
+
+Our platform combines intelligent document processing, real-time collaboration, and AI-powered content generation to transform how teams approach grant management. Whether you're tracking opportunities, coordinating across departments, or drafting applications, GrantFlow.AI provides the tools to work smarter.
+
+## Key Features
+
+- **Intelligent Grant Discovery**: Automated monitoring of grant opportunities with targeted notifications
+- **Collaborative Planning**: Real-time document editing with team members using CRDT-based synchronization
+- **AI-Powered Generation**: Leverage RAG technology to generate grant applications and materials
+- **Document Processing**: Advanced PDF, DOC, and web content extraction with semantic indexing
+- **Multi-Tenant Organization Management**: Role-based access and team collaboration
+- **Vector-Powered Search**: Semantic search across your documents and grants
+- **Integration-Ready**: Built-in support for Discord notifications and custom webhooks
+
+## Architecture
+
+### System Architecture
+
+GrantFlow.AI is built as a full-stack monorepo with a modern frontend, microservices backend, and real-time collaboration layer:
+
+```mermaid
+graph TB
+    subgraph Frontend["Frontend Layer"]
+        A["Next.js 15 Web App<br/>(React 19, Tailwind)"]
+    end
+
+    subgraph Collab["Real-Time Collaboration"]
+        E["Hocuspocus<br/>WebSocket Server"]
+        F["Y.js CRDT<br/>Document Sync"]
+    end
+
+    subgraph API["API Gateway & Services"]
+        B["Litestar<br/>REST API"]
+        C["Pub/Sub<br/>Message Bus"]
+    end
+
+    subgraph Services["Microservices"]
+        D1["Document<br/>Indexer"]
+        D2["Web<br/>Crawler"]
+        D3["RAG<br/>Engine"]
+        D4["Grant<br/>Scraper"]
+    end
+
+    subgraph Data["Data Layer"]
+        G["PostgreSQL<br/>+ pgvector"]
+        H["GCS<br/>Storage"]
+        I["Vector<br/>Database"]
+    end
+
+    A -->|HTTP/WebSocket| B
+    A -->|Real-time Sync| E
+    E -->|Y.js Protocol| F
+    B -->|Publish Events| C
+    C -->|Subscribe| D1
+    C -->|Subscribe| D2
+    C -->|Subscribe| D3
+    D1 --> G
+    D1 --> H
+    D1 --> I
+    D2 --> G
+    D3 --> I
+    D4 --> G
+    B --> G
+    B --> I
+```
+
+### RAG Pipeline
+
+The Retrieval Augmented Generation pipeline powers intelligent content generation using document context and domain expertise via [Kreuzberg](https://kreuzberg.dev):
+
+```mermaid
+graph LR
+    subgraph Input["Input Stage"]
+        A["Blueprint<br/>Requirements"]
+    end
+
+    subgraph Processing["Processing Stage"]
+        B["Query<br/>Planning"]
+        C["Vector<br/>Retrieval"]
+        D["Kreuzberg<br/>Context"]
+    end
+
+    subgraph Synthesis["Synthesis Stage"]
+        E["Multi-Model<br/>LLM"]
+        F["Content<br/>Generation"]
+    end
+
+    subgraph Output["Output"]
+        G["Grant<br/>Application<br/>Materials"]
+    end
+
+    A -->|User Intent| B
+    B -->|Semantic Query| C
+    C -->|Relevant Docs| D
+    D -->|Domain Knowledge| E
+    E -->|LLM Processing| F
+    F -->|Output| G
+```
+
+### Real-Time Collaboration
+
+Concurrent document editing is powered by CRDT (Conflict-free Replicated Data Type) synchronization with Y.js and Hocuspocus:
+
+```mermaid
+sequenceDiagram
+    participant User1 as User 1<br/>Client
+    participant User2 as User 2<br/>Client
+    participant Server as Hocuspocus<br/>WebSocket Server
+    participant YJS as Y.js Document<br/>State
+
+    User1->>Server: Connect & subscribe to doc
+    User2->>Server: Connect & subscribe to doc
+    Server-->>YJS: Load persisted state
+
+    User1->>YJS: Edit text (local CRDT op)
+    YJS-->>Server: Broadcast update
+    Server-->>User2: Send update (WebSocket)
+    User2->>YJS: Apply remote change
+
+    User2->>YJS: Edit different section
+    YJS-->>Server: Broadcast update
+    Server-->>User1: Send update (WebSocket)
+    User1->>YJS: Apply remote change (auto-merge)
+
+    Note over User1,User2: No conflicts - CRDT handles concurrent edits
+```
+
+## Technology Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | Next.js 15, React 19, TypeScript, Tailwind CSS, Zustand |
+| **Real-time Collab** | Hocuspocus, Y.js CRDT, WebSocket |
+| **Editor** | TipTap (rich text with collaborative capabilities) |
+| **API** | Litestar (Python async framework) |
+| **Authentication** | Firebase Auth |
+| **Database** | PostgreSQL 17 with pgvector extension |
+| **Processing** | Python microservices (Indexer, Crawler, RAG, Scraper) |
+| **AI/LLM** | OpenAI, Anthropic, Vertex AI |
+| **Storage** | Google Cloud Storage |
+| **Messaging** | Google Cloud Pub/Sub |
+| **Infrastructure** | Google Cloud Run, OpenTofu/Terraform |
+| **Observability** | OpenTelemetry, Cloud Logging |
+
+## Quick Start
+
+This project is a monorepo with multiple services. For detailed setup instructions, build procedures, and development workflows:
+
+📖 **See [CONTRIBUTING.md](./CONTRIBUTING.md)** for:
+- Prerequisites and environment setup
+- Local development commands
+- Testing procedures
+- Deployment guidelines
+
+## Documentation
+
+- **[Technical Docs](./docs/README.md)**: Architecture, API specs, and security documentation
+- **[Contributing Guide](./CONTRIBUTING.md)**: Development setup and workflows
+- **[Backend Services](./services/)**: Individual service READMEs
+- **[Packages](./packages/)**: Database, utilities, and shared code
+- **[Frontend](./frontend/README.md)**: Next.js application guide
+- **[Editor](./editor/README.md)**: Collaborative editor package
 
 ## Repository Map
 
@@ -82,393 +246,19 @@ Next.js 15, and the backend is a microservice-based Python architecture.
 - **`Taskfile.yaml`** - Task automation (replacement for Makefiles)
 - **`docker-compose.yaml`** - Local development environment
 
-## Prerequisites
+## Contributing
 
-- Node.js 22 or higher
-- Python 3.13
-- Docker and Docker Compose
-- **PostgreSQL 17 with pgvector extension**: For local database testing (required for backend tests)
-- [UV](https://github.com/astral-sh/uv): Package manager for Python dependencies
-- [PNPM](https://pnpm.io/): Package manager for JavaScript/TypeScript dependencies
-- [Task](https://taskfile.dev): Taskfile runner
-- [OpenTofu](https://opentofu.org/): Infrastructure as Code tool for managing cloud resources
-- [GCloud CLI](https://cloud.google.com/sdk/docs/install): For GCP management
-- [GCloud CLI Pub/Sub Emulator](https://cloud.google.com/pubsub/docs/emulator): For local development
-- [Firebase CLI](https://firebase.google.com/docs/cli): For Firebase and secret access (required for both frontend and
-  backend development)
+We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for:
+- Code standards and conventions
+- Testing requirements
+- Pull request process
+- Development setup
 
-Make sure to install all of these on your system.
+## License
 
-### PostgreSQL Setup for Testing
+GrantFlow.AI is dual-licensed under the **Business Source License 1.1 (BSL 1.1)** and the **Apache License 2.0**.
 
-The project uses local PostgreSQL for testing instead of Docker containers for better performance and isolation:
+- Under BSL 1.1: You may use this software for any purpose except offering it as a managed service to third parties without a commercial license
+- **Conversion Date**: January 10, 2030 - The software will automatically convert to Apache 2.0 four years after the release date, making it fully open source
 
-```bash
-# macOS (using Homebrew)
-brew install postgresql@17 pgvector
-
-# Ubuntu/Debian
-sudo apt-get install postgresql-17 postgresql-17-pgvector
-
-# Start PostgreSQL service
-# macOS: brew services start postgresql@17
-# Ubuntu: sudo systemctl start postgresql
-```
-
-**Important**: Each test worker creates its own isolated database (`grantflow_test_{worker_id}_{process_id}`) to prevent conflicts during parallel test execution.
-
-## Getting Started
-
-Begin by installing system dependencies mentioned above. Then verify the installation of taskfile by listing available
-commands:
-
-```bash
-task --list-all
-```
-
-### Environment Setup
-
-The project uses a single `.env` file in the root directory for all services:
-
-1. Copy the `.env.example` file in the root directory:
-   ```bash
-   cp .env.example .env
-   ```
-2. Update the `.env` file with your actual values
-3. Reach out to the team to get secret values for sensitive fields
-
-**Note**: The project uses a unified environment configuration in the root `.env` file.
-
-### Initial Setup
-
-After installing Task, run:
-
-```bash
-task setup
-```
-
-This will install all dependencies and set up git hooks using `prek`.
-
-## Local Development
-
-We use Task to manage development workflows. Here are the key commands:
-
-```bash
-# Start all services in development mode (database, backend, indexer, frontend)
-task dev
-
-# Run all tests
-task test
-
-# Run all linters and formatters
-task lint               # Run all linters on all files
-
-# Run linters by scope
-task lint:frontend      # Run Biome, ESLint, and TypeScript for frontend
-task lint:python        # Run Ruff and MyPy for Python
-
-# Run specific linters
-task lint:biome         # Format and lint JS/TS/JSON/CSS with Biome
-task lint:eslint        # Lint TypeScript/React with ESLint
-task lint:typescript    # Type check TypeScript code
-task lint:ruff          # Lint and format Python code
-task lint:mypy          # Type check Python code
-task lint:codespell     # Check for common misspellings
-
-# Dead code analysis
-task knip               # Check for unused dependencies and dead code in frontend/editor
-task knip:frontend      # Check frontend package only
-task knip:editor        # Check editor package only
-
-# Terraform linters (specialized - not included in task lint)
-task lint:terraform     # Run all Terraform linters
-task lint:terraform:fmt # Format Terraform code
-task lint:terraform:validate # Validate Terraform syntax
-task lint:terraform:tflint   # Lint Terraform best practices
-task lint:terraform:trivy    # Security scan Terraform code
-```
-
-### Database Management
-
-```bash
-# Start the database (does not restart if already running)
-task db:up
-
-# Stop the database
-task db:down
-
-# Apply migrations
-task db:migrate
-
-# Create a new migration
-task db:create-migration -- <migration_name>
-
-# Seed the database
-task db:seed
-
-# Drop and recreate database (WARNING: destroys all data)
-task db:drop
-
-# Drop database and re-run migrations (WARNING: destroys all data)
-task db:reset
-```
-
-### Remote Database (Cloud SQL)
-
-```bash
-# Start Cloud SQL Proxy for remote database access
-task db:proxy:start
-
-# Stop Cloud SQL Proxy
-task db:proxy:stop
-
-# Check Cloud SQL Proxy status
-task db:proxy:status
-
-# Restart Cloud SQL Proxy
-task db:proxy:restart
-
-# Apply migrations to Cloud SQL (auto-starts proxy)
-task db:migrate:remote
-```
-
-### Docker Compose Commands
-
-Our docker-compose.yaml uses profiles to organize services into logical groups. This allows you to run only the services
-you need for a specific task.
-
-```bash
-# Start all services
-docker compose --profile all up -d
-
-# Start only backend-related services (backend, db, gcs-emulator)
-docker compose --profile backend up -d
-
-# Start only indexer-related services (indexer, db, gcs-emulator)
-docker compose --profile indexer up -d
-
-# Start only crawler-related services (crawler, db, gcs-emulator)
-docker compose --profile crawler up -d
-
-# Start only frontend services
-docker compose --profile frontend up -d
-
-# Start only database and supporting services for backend development
-docker compose --profile services up -d
-
-# Stop all running services
-docker compose down
-
-# View logs for a specific service
-docker compose logs -f backend
-```
-
-Available profiles:
-
-- `all`: All services
-- `backend`: Backend API service and its dependencies
-- `indexer`: Indexer service and its dependencies
-- `crawler`: Crawler service and its dependencies
-- `rag`: RAG service and its dependencies
-- `scraper`: Scraper service and its dependencies
-- `frontend`: Frontend service
-- `services`: All backend services
-
-### Service-Specific Development
-
-For frontend development:
-
-```bash
-# Start just the frontend
-task frontend:dev
-```
-
-Backend services are managed collectively through `task dev`.
-
-For a complete list of available commands:
-
-```bash
-task --list
-```
-
-### Cloud Functions Development
-
-```bash
-# Generate requirements.txt files from pyproject.toml for cloud functions
-task cloud-functions:generate-requirements
-```
-
-### Testing Variations
-
-```bash
-# Run all tests (default, parallel execution)
-task test
-
-# Run tests in CI mode (serial execution)
-task test:ci
-
-# Run all end-to-end tests
-task test:e2e
-```
-
-
-
-## Windows Setup (WSL)
-
-> ⚠️ Windows has path compatibility issues (e.g., filenames containing `:` are not supported), which may cause Git
-> operations to fail when working directly on the Windows file system.
-
-### Recommended: Use WSL for Development
-
-We recommend using [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/en-us/windows/wsl/install) to create
-a Linux-native development environment on Windows.
-
-WSL provides full compatibility with the tooling used in this monorepo (Node.js, Python, Docker, etc.) and avoids common
-filesystem issues on Windows.
-
-### Installing Ubuntu on WSL
-
-We suggest installing the latest **Ubuntu LTS** release (e.g., Ubuntu 22.04) for best compatibility and support.
-
-Follow the official Ubuntu WSL guide here:
-👉 [Develop on Ubuntu with WSL](https://documentation.ubuntu.com/wsl/en/latest/tutorials/develop-with-ubuntu-wsl/)
-
-Once WSL and Ubuntu are installed and configured, your environment is ready to mount and develop the repository using
-the instructions in the [Getting Started](#getting-started) section.
-
-## Deployment Environments
-
-### Frontend Deployments
-
-- **Staging**: https://staging--grantflow-staging.us-central1.hosted.app
-  - Firebase Project: `grantflow-staging`
-  - Branch: `development` (auto-deploys)
-  - Mock API/Auth enabled by default
-  - Configuration: `apphosting.staging.yaml`
-
-- **Production**: https://grantflow.ai
-  - Firebase Project: `grantflow`
-  - Branch: `main` (auto-deploys)
-  - Real API/Auth integration
-  - Configuration: `apphosting.production.yaml`
-
-### Backend Services
-
-Backend services are deployed to Cloud Run:
-- API: `https://staging-api.grantflow.ai` (staging)
-- Services: backend, indexer, crawler, rag, scraper
-- Database: Cloud SQL PostgreSQL
-- Storage: GCS buckets
-
-## Code Quality and Linting
-
-This project uses multiple tools to ensure code quality:
-
-### Frontend & Editor
-
-- **[Biome](https://biomejs.dev/)**: Primary formatter and linter for JS/TS/JSON/CSS files
-- **[ESLint](https://eslint.org/)**: Additional TypeScript and React-specific rules
-- **[Knip](https://knip.dev/)**: Dead code elimination and unused dependency detection
-- **TypeScript**: Strict type checking
-
-### Backend
-
-- **[MyPy](https://mypy-lang.org/)**: Static type checker for Python
-- **[Ruff](https://docs.astral.sh/ruff/)**: Fast Python linter and formatter
-- **[Codespell](https://github.com/codespell-project/codespell)**: Spell checker for code
-
-### Git Hooks
-
-We manage Git hooks with [Prek](https://github.com/j178/prek):
-
-- `task setup` installs Prek via `uv tool` and wires the hooks
-- Hooks execute the same validations we run in CI (linters, formatters, commitlint)
-- You can run the full suite manually with `uvx prek run --all-files`
-
-## Testing
-
-The project uses different testing strategies optimized for performance and reliability:
-
-### Backend Testing
-
-**Database Testing**:
-- Uses local PostgreSQL 17 with pgvector extension (not Docker)
-- Each test worker gets isolated database: `grantflow_test_{worker_id}_{process_id}`
-- Fast cleanup with TRUNCATE instead of DROP/CREATE
-- Parallel test execution with pytest-xdist (max 4 workers locally, 2 in CI)
-
-**Running Backend Tests**:
-```bash
-# Run all unit tests (default, fast)
-task test
-
-# Run tests for specific services
-PYTHONPATH=. uv run pytest services/backend/tests/
-PYTHONPATH=. uv run pytest services/indexer/tests/
-PYTHONPATH=. uv run pytest services/rag/tests/
-PYTHONPATH=. uv run pytest services/crawler/tests/
-PYTHONPATH=. uv run pytest services/scraper/tests/
-```
-
-### Frontend Testing
-
-**Performance Configuration**:
-- Vitest with thread-based parallelization (up to 8 concurrent threads)
-- Disabled test isolation for faster execution
-- Efficient caching with Vite cache directory
-- Concurrent test execution within suites
-
-**Running Frontend Tests**:
-```bash
-# Run frontend tests
-cd frontend && pnpm test
-
-# Run specific test files
-cd frontend && pnpm test src/utils/format.spec.ts
-```
-
-### End-to-End Tests
-
-E2E tests validate real functionality with actual services and APIs. They are categorized by duration and purpose:
-
-**Running E2E Tests**:
-```bash
-# Run E2E tests by category
-E2E_TESTS=1 pytest -m "smoke"              # Quick validation (<1 min)
-E2E_TESTS=1 pytest -m "quality_assessment" # Moderate quality checks (2-5 min)
-E2E_TESTS=1 pytest -m "e2e_full"          # Complete integration tests (10+ min)
-E2E_TESTS=1 pytest -m "semantic_evaluation" # Semantic similarity tests
-E2E_TESTS=1 pytest -m "ai_eval"           # AI-powered evaluation tests
-
-# Run specific service E2E tests
-E2E_TESTS=1 pytest services/indexer/tests/e2e/
-E2E_TESTS=1 pytest services/crawler/tests/e2e/
-E2E_TESTS=1 pytest services/rag/tests/e2e/
-E2E_TESTS=1 pytest services/scraper/tests/
-
-# Skip expensive AI tests in CI
-E2E_TESTS=1 pytest -m "not (ai_eval or semantic_evaluation)"
-```
-
-**Writing E2E Tests**:
-Use the `@performance_test` decorator from `testing.performance_framework`:
-
-```python
-from testing.performance_framework import TestExecutionSpeed, TestDomain, performance_test
-
-@performance_test(execution_speed=TestExecutionSpeed.SMOKE, domain=TestDomain.EXAMPLE, timeout=60)
-async def test_basic_functionality(logger: logging.Logger) -> None:
-    # Test implementation
-```
-
-Categories:
-- `SMOKE`: Essential functionality checks
-- `QUALITY_ASSESSMENT`: Quality validation tests
-- `E2E_FULL`: Comprehensive pipeline tests
-- `SEMANTIC_EVALUATION`: Embedding similarity tests
-- `AI_EVAL`: AI-powered quality assessments
-
-## Commit Conventions
-
-This project follows the [Conventional Commits](https://www.conventionalcommits.org/) specification for creating clear
-and structured commit messages. We enforce this using [commitlint](https://commitlint.js.org/).
+For detailed license terms, see [LICENSE.md](./LICENSE.md).

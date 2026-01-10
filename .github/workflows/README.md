@@ -2,94 +2,159 @@
 
 ## Overview
 
-Our CI/CD pipeline follows a two-stage approach:
-1. **Build Stage**: Individual services are built and pushed to Artifact Registry
-2. **Deploy Stage**: Terraform applies infrastructure changes after all builds complete
+This directory contains GitHub Actions workflows focused on continuous integration and validation. Deployment to production is now handled manually via Terraform/OpenTofu for greater control and flexibility in self-hosted environments.
 
-## Build Workflows
+## CI Workflows
 
-Each service has its own build workflow that triggers on changes to relevant paths:
+### Service CI Workflows
 
-- `build-backend.yaml` - Backend API service
-- `build-crawler.yaml` - Web crawler service
-- `build-indexer.yaml` - Document indexing service
-- `build-rag.yaml` - RAG processing service
-- `build-scraper.yaml` - Grant scraper service
-- `build-crdt.yaml` - CRDT collaboration server
-- `build-frontend.yaml` - Next.js frontend application
+Each service has its own CI workflow that runs tests, linting, and type checking:
 
-All service builds use the shared `build-service.yaml` workflow template.
+- `ci-service-backend.yaml` - Backend API service
+- `ci-service-crawler.yaml` - Web crawler service
+- `ci-service-crdt.yaml` - CRDT collaboration server
+- `ci-service-indexer.yaml` - Document indexing service
+- `ci-service-rag.yaml` - RAG processing service
+- `ci-service-scraper.yaml` - Grant scraper service
 
-## Deploy Workflow
+### Package CI Workflows
 
-`deploy-terraform.yaml` handles all deployments via Terraform/OpenTofu:
+- `ci-package-db.yaml` - Database models package
+- `ci-package-shared-utils.yaml` - Shared utilities package
 
-### Triggers
-- Automatically after ANY build workflow completes successfully
-- Only deploys when ALL required services have successful builds for the commit
-- Manual trigger via workflow_dispatch
+### Frontend Workflows
 
-### Environments
-- `development` branch → `staging` environment
-- `main` branch → `production` environment
+- `ci-frontend.yaml` - Next.js frontend (type checking, linting, build)
+- `ci-editor.yaml` - Collaborative editor (type checking, linting, build)
 
-### Process
-1. Checks that all required build workflows succeeded
-2. Runs `tofu plan` to preview changes
-3. Requires manual approval for production deployments
-4. Applies changes with `tofu apply`
-5. Updates traffic routing to new revisions
+### Cloud Functions
 
-## Key Features
+- `ci-cloud-functions.yaml` - Firebase Cloud Functions
 
-### Separation of Concerns
-- Build workflows ONLY build and push Docker images
-- Deploy workflow ONLY handles infrastructure changes via Terraform
-- No direct `gcloud run deploy` commands in CI
+### Infrastructure Validation
 
-### Safety Mechanisms
-- Waits for all builds to complete before deploying
-- Manual approval gates for production
-- Automatic rollback on deployment failures
-- Concurrent deployment prevention via concurrency groups
+- `ci-terraform.yaml` - Terraform/OpenTofu validation
+  - Checks syntax with `tofu fmt`
+  - Validates configuration with `tofu validate`
+  - Runs TFLint for best practices
+  - **Note**: Local state only, does not deploy
 
-### Terraform State Management
-- Remote state stored in GCS bucket
-- State locking prevents concurrent modifications
-- Separate state files for staging and production
+### Utility Workflows
+
+- `validate.yaml` - Root-level validation for workspace
+- `pr-title.yaml` - Validates PR titles follow Conventional Commits
+
+### E2E Testing Workflows
+
+- `e2e-service-crawler.yaml` - Crawler end-to-end tests
+- `e2e-service-indexer.yaml` - Indexer end-to-end tests
+- `e2e-service-rag.yaml` - RAG end-to-end tests
+- `e2e-service-scraper.yaml` - Scraper end-to-end tests
+
+## Testing Strategy
+
+### Unit & Integration Testing
+- Services: 80-95% coverage via pytest
+- Packages: 80-95% coverage via pytest
+- Frontend: 80% coverage via Vitest/Jest
+
+### Real Database Testing
+- Integration tests use real PostgreSQL, never mocks
+- Fixtures use JSON/YAML schemas
+- Tests are parametrized where applicable
+
+### E2E Testing
+- Smoke tests on key service integrations
+- Full integration tests with real dependencies
 
 ## Manual Deployment
 
-To manually trigger a deployment:
-1. Go to Actions → Deploy with Terraform
-2. Click "Run workflow"
-3. Select environment and options
-4. Click "Run workflow"
+For information on deploying to production environments, see `/terraform/README.md`.
 
-## Troubleshooting
+The Terraform CI workflow (`ci-terraform.yaml`) validates configuration syntax and structure but does not deploy. Actual infrastructure changes must be applied manually using the OpenTofu CLI.
 
-### Build Failures
-- Check individual build workflow logs
-- Verify Docker build context and Dockerfile
-- Ensure all dependencies are available
+### Quick Reference
 
-### Deployment Failures
-- Check Terraform plan output for errors
-- Verify GCP permissions for service accounts
-- Check for state lock conflicts
-- Review Terraform logs in the workflow run
+```bash
+# Validate without deploying
+cd terraform/environments/staging
+tofu init -backend=false
+tofu validate
 
-### Partial Deployments
-The deploy workflow will NOT run if any required build fails. To force a deployment:
-1. Fix the failing build
-2. Re-run the failed workflow
-3. Once all succeed, deployment will trigger automatically
+# Deploy to staging
+cd terraform/environments/staging
+tofu init -backend-config="bucket=grantflow-terraform-state" -backend-config="prefix=staging"
+tofu plan -out=tfplan
+tofu apply tfplan
 
-## Development Workflow
+# Deploy to production
+cd terraform/environments/production
+tofu init -backend-config="bucket=grantflow-terraform-state" -backend-config="prefix=production"
+tofu plan -out=tfplan
+tofu apply tfplan
+```
 
-1. Create feature branch from `development`
-2. Make changes to services
-3. Push changes - builds trigger automatically
-4. Once all builds pass, Terraform deployment runs
-5. Verify changes in staging environment
-6. Create PR to `main` for production deployment
+## Self-Hosting Guide
+
+If you're self-hosting GrantFlow:
+
+1. **Fork the repository** to your own GitHub account
+2. **Disable automatic deployments** (all build/deploy workflows are already removed)
+3. **Use CI for validation**: Push code and let workflows validate tests and configuration
+4. **Manual deployment**: Follow the manual deployment process in `/terraform/README.md`
+5. **Adapt for your infrastructure**: Modify Terraform modules in `/terraform/modules/` for your environment
+
+For detailed self-hosting setup, see `/terraform/README.md`.
+
+## Workflow Triggers
+
+### Pull Requests
+- All CI workflows run on pull requests to `main` or `development*` branches
+- Workflow run is required before merge
+- Status checks must pass
+
+### Push Events
+- CI workflows run on merge to main branches
+- Useful for validation before releases
+
+## Best Practices
+
+### Before Committing
+- Run tests locally: `pnpm test` or `task test`
+- Run linters: `pnpm lint` or `task lint`
+- Format code: `pnpm format` or `task format`
+- All formatting and checks are enforced by prek pre-commit hooks
+
+### Debugging Workflow Failures
+
+1. **Check the workflow run logs** in GitHub Actions
+2. **Look for specific error messages** in the failed step
+3. **Reproduce locally** if possible using the same commands from the workflow
+4. **Check dependencies** are properly installed and configured
+
+### Common Issues
+
+- **Type errors**: Run `pnpm type-check` locally
+- **Linting failures**: Run `pnpm lint --fix` locally
+- **Test failures**: Run `pnpm test` with the failing test name
+- **Build failures**: Check for missing dependencies or configuration issues
+
+## Removed Workflows
+
+Several workflows have been removed as of 2026-01-10 to streamline the CI/CD process:
+
+- Build workflows (replaced by CI workflows with testing)
+- Deployment workflows (replaced with manual Terraform process)
+- Setup-GCP action (no longer needed for CI-only pipelines)
+
+See `REMOVED_WORKFLOWS.md` for details on what was removed and why.
+
+## Contributing
+
+When adding new workflows:
+
+1. Follow the naming convention: `ci-<component>.yaml` for CI workflows
+2. Use existing actions in `.github/actions/` for consistency
+3. Ensure workflow runs quickly (aim for < 10 minutes for CI)
+4. Add documentation to this README
+5. Reference the workflow in the appropriate section above

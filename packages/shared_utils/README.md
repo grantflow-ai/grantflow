@@ -2,6 +2,12 @@
 
 Shared utilities for AI/LLM operations, Pub/Sub messaging, Cloud Storage, embeddings, logging, serialization, and observability across GrantFlow.AI microservices.
 
+## Getting Started
+
+For prerequisites, environment setup, and general development workflow, see the [Contributing Guide](../../CONTRIBUTING.md).
+
+This README covers shared_utils package-specific architecture and development details.
+
 ## Package Structure
 
 ```

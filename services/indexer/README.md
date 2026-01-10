@@ -2,6 +2,12 @@
 
 The Indexer Service is a Cloud Run microservice that processes uploaded documents through a comprehensive text extraction, entity recognition, chunking, and embedding generation pipeline. It transforms raw files (PDF, DOC, HTML) into searchable vector representations stored in PostgreSQL with pgvector, enabling intelligent document retrieval for the RAG system.
 
+## Getting Started
+
+For prerequisites, environment setup, and general development workflow, see the [Contributing Guide](../../CONTRIBUTING.md).
+
+This README covers indexer service-specific architecture and development details.
+
 ## Service Structure
 
 ```

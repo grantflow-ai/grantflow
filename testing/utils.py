@@ -291,70 +291,11 @@ async def process_application_files(
     source_files: list[Path],
     async_session_maker: async_sessionmaker[Any],
 ) -> None:
-    if not list(application_files_fixtures_dir.glob("*.json")):
-        await asyncio.gather(
-            *[
-                parse_source_file(
-                    application_id=application_id,
-                    source_file=source_file,
-                    async_session_maker=async_session_maker,
-                    target_folder=application_files_fixtures_dir,
-                )
-                for source_file in source_files
-            ]
-        )
-    async with async_session_maker() as session, session.begin():
-        for application_file in application_files_fixtures_dir.glob("*.json"):
-            data = deserialize(application_file.read_bytes(), dict[str, Any])
-            rag_file_data = data.pop(RAG_FILE)
-            rag_source_id = data.pop("rag_source_id")
-            text_vectors: list[dict[str, Any]] = rag_file_data.pop("text_vectors")
-
-            parent_data = {
-                k: v for k, v in rag_file_data.items() if k in {"indexing_status", "text_content", "source_type"}
-            }
-            if "source_type" not in parent_data:
-                parent_data["source_type"] = RAG_FILE
-
-            await session.execute(
-                insert(RagSource)
-                .values({"id": rag_source_id, **parent_data})
-                .on_conflict_do_nothing(index_elements=["id"])
-            )
-
-            child_data = {
-                k: v
-                for k, v in rag_file_data.items()
-                if k not in {"indexing_status", "text_content", "source_type", "created_at", "updated_at"}
-                and v is not None
-            }
-
-            child_data.setdefault("bucket_name", "test-bucket")
-            child_data.setdefault("object_path", f"test/{child_data.get('filename', 'unknown')}")
-
-            await session.execute(
-                insert(RagFile)
-                .values({"id": rag_source_id, **child_data})
-                .on_conflict_do_nothing(index_elements=["id"])
-            )
-            await session.execute(
-                insert(GrantApplicationSource)
-                .values({"grant_application_id": application_id, "rag_source_id": rag_source_id})
-                .on_conflict_do_nothing(index_elements=["grant_application_id", "rag_source_id"])
-            )
-            await session.execute(
-                insert(TextVector).values(
-                    [
-                        {
-                            k: v
-                            for k, v in text_vector.items()
-                            if v is not None and k not in {"created_at", "updated_at"}
-                        }
-                        for text_vector in text_vectors
-                    ]
-                )
-            )
-        await session.commit()
+    raise NotImplementedError(
+        "process_application_files is no longer available. "
+        "This function relied on test data that has been removed per ADR-002. "
+        "For application testing, use synthetic data generation or database-backed test fixtures instead."
+    )
 
 
 async def create_grant_template_for_application(
@@ -524,23 +465,8 @@ async def create_grant_application_data(
     source_file_names: list[str],
     title: str = "Test Application",
 ) -> str:
-    application_id = await create_funding_application(
-        async_session_maker, fixture_id, str(project.id), title, research_objectives, form_inputs
+    raise NotImplementedError(
+        "create_grant_application_data is no longer available. "
+        "This function relied on test data that has been removed per ADR-002. "
+        "For E2E testing, use synthetic data generation or API-based test fixtures instead."
     )
-
-    await create_grant_template_for_application(application_id, async_session_maker)
-
-    cfp_content_file = FIXTURES_FOLDER / "cfps" / cfp_markdown_file_name
-    cfp_source_file = SOURCES_FOLDER / "cfps" / source_file_names[0]
-    await ensure_cfp_content_exists(cfp_content_file, cfp_source_file)
-
-    data_fixture_folder = FIXTURES_FOLDER / fixture_id
-    ensure_directory(data_fixture_folder)
-
-    application_files_fixtures_dir = data_fixture_folder / "files"
-    ensure_directory(application_files_fixtures_dir)
-    source_files = list((SOURCES_FOLDER / "application_sources").glob("*.*"))
-
-    await process_application_files(application_id, application_files_fixtures_dir, source_files, async_session_maker)
-
-    return str(application_id)
