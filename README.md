@@ -152,7 +152,7 @@ sequenceDiagram
 
 This project is a monorepo with multiple services. For detailed setup instructions, build procedures, and development workflows:
 
-📖 **See [CONTRIBUTING.md](./CONTRIBUTING.md)** for:
+**See [CONTRIBUTING.md](./CONTRIBUTING.md)** for:
 - Prerequisites and environment setup
 - Local development commands
 - Testing procedures
@@ -169,7 +169,7 @@ This project is a monorepo with multiple services. For detailed setup instructio
 
 ## Repository Map
 
-### 🏗️ Core Infrastructure
+### Core Infrastructure
 - **[`/.github`](./.github)** - GitHub Actions CI/CD workflows and reusable actions
 - **[`/terraform`](./terraform/README.md)** - Infrastructure as Code using OpenTofu
   - `environments/` - Environment-specific configurations (staging, production)
@@ -180,7 +180,7 @@ This project is a monorepo with multiple services. For detailed setup instructio
   - `budget_alerts/` - Cost monitoring alerts
   - `email_notifications/` - Transactional email service
 
-### 🎨 Frontend Applications
+### Frontend Applications
 - **[`/frontend`](./frontend/README.md)** - Next.js 15 web application
   - Modern React 19 with TypeScript
   - Tailwind CSS for styling
@@ -193,7 +193,7 @@ This project is a monorepo with multiple services. For detailed setup instructio
   - Hocuspocus WebSocket server
   - Y.js document synchronization
 
-### 🔧 Backend Services
+### Backend Services
 - **[`/services/backend`](./services/backend/README.md)** - Main API service
   - Litestar async framework
   - JWT authentication with Firebase
@@ -216,7 +216,7 @@ This project is a monorepo with multiple services. For detailed setup instructio
   - Automated opportunity monitoring
   - Discord notifications
 
-### 📦 Shared Packages
+### Shared Packages
 - **[`/packages/db`](./packages/db/README.md)** - Database layer
   - SQLAlchemy models and migrations
   - Alembic migration management
@@ -228,7 +228,7 @@ This project is a monorepo with multiple services. For detailed setup instructio
   - OpenTelemetry instrumentation
   - Embeddings and NLP utilities
 
-### 📚 Documentation & Testing
+### Documentation and Testing
 - **[`/docs`](./docs/README.md)** - Comprehensive technical documentation
   - Architecture diagrams
   - API specifications
@@ -239,7 +239,7 @@ This project is a monorepo with multiple services. For detailed setup instructio
   - Webhook testing tools
   - Integration test fixtures
 
-### 🛠️ Development Tools
+### Development Tools
 - **`/.vscode`** - VS Code workspace settings and recommended extensions
 - **`/.idea`** - IntelliJ IDEA project configuration
 - **`/scripts`** - Utility scripts for development and deployment

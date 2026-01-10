@@ -394,23 +394,6 @@ def mock_job_manager() -> AsyncMock:
     return mock_manager
 
 
-# REMOVED: CFP analysis fixtures and RAG source loaders (see ADR-002)
-# @pytest.fixture
-# def mra_cfp_analysis_fixture() -> CFPAnalysis:
-#     """Load MRA CFP analysis fixture representing high-quality cfp_analysis output. ~keep"""
-#     fixture_file = FIXTURES_FOLDER / "cfp_analysis" / "mra_2023_2024_cfp_analysis.json"
-#     assert fixture_file.exists(), f"MRA CFP analysis fixture not found: {fixture_file}"
-#     return deserialize(fixture_file.read_bytes(), CFPAnalysis)
-
-
-# @pytest.fixture
-# def nih_par_25_450_cfp_analysis_fixture() -> CFPAnalysis:
-#     """Load NIH PAR-25-450 CFP analysis fixture representing high-quality cfp_analysis output. ~keep"""
-#     fixture_file = FIXTURES_FOLDER / "cfp_analysis" / "nih_par_25_450_cfp_analysis.json"
-#     assert fixture_file.exists(), f"NIH PAR-25-450 CFP analysis fixture not found: {fixture_file}"
-#     return deserialize(fixture_file.read_bytes(), CFPAnalysis)
-
-
 @pytest.fixture
 def expected_mra_sections(mra_cfp_analysis_fixture: CFPAnalysis) -> list[dict[str, Any]]:
     """Expected sections for MRA CFP derived from cfp_analysis fixture. ~keep
