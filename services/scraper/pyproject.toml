@@ -9,12 +9,12 @@ requires-python = "==3.13.*"
 classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.13" ]
 
 dependencies = [
-  "anyio>=4.12",
+  "anyio>=4.12.1",
   "db",
-  "html-to-markdown>=2.9.2",
+  "html-to-markdown>=2.20",
   "httpx>=0.28.1",
   "mdformat>=0.7.20",
   "pandas>=2.2.3",
-  "playwright>=1.49.1",
+  "playwright>=1.57",
   "shared-utils[server]",
 ]

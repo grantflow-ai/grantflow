@@ -14,7 +14,7 @@ requires-python = "==3.13.*"
 classifiers = [ "Programming Language :: Python :: 3 :: Only", "Programming Language :: Python :: 3.13" ]
 
 dependencies = [
-  "anyio>=4.12",
+  "anyio>=4.12.1",
   "msgspec>=0.20",
   "structlog>=25.2",
   "tenacity>=9",
@@ -22,19 +22,19 @@ dependencies = [
 
 optional-dependencies.ai = [
   "anthropic>=0.75",
-  "google-genai>=0.1",
+  "google-genai>=1.57",
   "prompt-template>=1.2",
 ]
 # Chunking now handled by Kreuzberg natively - no separate dependency needed
 optional-dependencies.embeddings = [
-  "sentence-transformers[onnx]>=4.1",
+  "sentence-transformers[onnx]>=5.2",
 ]
 optional-dependencies.extraction = [
   "en-core-web-sm",
-  "kreuzberg[chunking,document-classification,entity-extraction,langdetect]>=3.20.1",
+  "kreuzberg[chunking,document-classification,entity-extraction,langdetect]>=3.22",
 ]
 optional-dependencies.gcs = [
-  "google-cloud-storage>=2.19",
+  "google-cloud-storage>=3.7",
 ]
 optional-dependencies.nlp = [
   "en-core-web-sm",
@@ -43,16 +43,16 @@ optional-dependencies.nlp = [
   "torch>=2.7.1",
 ]
 optional-dependencies.pubsub = [
-  "google-cloud-pubsub>=2.30",
+  "google-cloud-pubsub>=2.34",
 ]
 
 optional-dependencies.server = [
-  "litestar[opentelemetry]>=2.16",
+  "litestar[opentelemetry]>=2.19",
   "opentelemetry-exporter-gcp-monitoring>=1.6",
   "opentelemetry-exporter-gcp-trace>=1.6",
-  "opentelemetry-instrumentation-httpx>=0.41b0",
-  "opentelemetry-instrumentation-sqlalchemy>=0.41b0",
-  "uvicorn[standard]>=0.34.3",
+  "opentelemetry-instrumentation-httpx>=0.60b1",
+  "opentelemetry-instrumentation-sqlalchemy>=0.60b1",
+  "uvicorn[standard]>=0.40",
 ]
 
 [dependency-groups]

@@ -92,3 +92,24 @@ venv/
 .kreuzberg/
 # Cloud Functions - temporary deployment files
 functions/*/packages/
+
+.idea/
+.vscode/
+
+# AI Rules generated files
+.codex/skills/grantflow-dev-prerequisites/SKILL.md
+.codex/skills/grantflow-architecture/SKILL.md
+.codex/skills/grantflow-cicd-standards/SKILL.md
+.codex/skills/grantflow-multitenant-security/SKILL.md
+.codex/skills/grantflow-task-automation/SKILL.md
+.codex/skills/grantflow-testing-strategy/SKILL.md
+.codex/skills/typescript-5-strictest/SKILL.md
+.codex/skills/grantflow-pubsub-communication/SKILL.md
+.codex/skills/grantflow-api-design/SKILL.md
+.codex/skills/postgres-sqlalchemy-standards/SKILL.md
+.codex/skills/grantflow-llm-integration/SKILL.md
+.codex/skills/python-3-13-async/SKILL.md
+.codex/skills/grantflow-dev-workflow/SKILL.md
+.codex/skills/grantflow-testing-guide/SKILL.md
+.codex/
+.codex/skills/grantflow-async-patterns/SKILL.md

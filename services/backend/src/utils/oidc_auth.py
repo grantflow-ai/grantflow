@@ -23,7 +23,7 @@ def verify_webhook_oidc_token(token: str, expected_audience: str) -> bool:
     )
 
     try:
-        request = google.auth.transport.requests.Request()  # type: ignore[no-untyped-call]
+        request = google.auth.transport.requests.Request()
 
         claims = google.oauth2.id_token.verify_oauth2_token(  # type: ignore[no-untyped-call]
             token, request, audience=expected_audience

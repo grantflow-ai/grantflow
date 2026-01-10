@@ -14,8 +14,8 @@ classifiers = [
   "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-  "faker>=37.0.1",
-  "pytest>=8.3.5",
+  "faker>=40.1",
+  "pytest>=9.0.2",
   "pytest-asyncio>=0.25.3",
   "pytest-cov>=6",
   "pytest-mock>=3.14",
@@ -27,37 +27,37 @@ optional-dependencies.all = [
   "shared-testing[db,evaluation,firebase,gcs,performance,playwright,pubsub,rag,scenarios]",
 ]
 optional-dependencies.db = [
-  "alembic>=1.15.1,<2",
+  "alembic>=1.18,<2",
   "asyncpg>=0.31",
-  "sqlalchemy>=2.0.39,<3",
-  "testcontainers[postgres]>=4.13.2",
+  "sqlalchemy>=2.0.45,<3",
+  "testcontainers[postgres]>=4.14",
 ]
 optional-dependencies.evaluation = [
   "anthropic>=0.40",
-  "scikit-learn>=1.6.1",
-  "textstat>=0.7.10",
-  "transformers>=4.49",
+  "scikit-learn>=1.8",
+  "textstat>=0.7.12",
+  "transformers>=4.57.3",
 ]
 optional-dependencies.firebase = [
   "firebase-admin>=7",
 ]
 optional-dependencies.gcs = [
-  "google-cloud-storage>=2.19",
-  "testcontainers>=4.13.2",
+  "google-cloud-storage>=3.7",
+  "testcontainers>=4.14",
 ]
 optional-dependencies.performance = [
-  "psutil>=6.1.1",
+  "psutil>=7.2.1",
 ]
 optional-dependencies.playwright = [
-  "playwright>=1.45",
+  "playwright>=1.57",
 ]
 optional-dependencies.pubsub = [
-  "google-cloud-pubsub>=2.26.1",
+  "google-cloud-pubsub>=2.34",
 ]
 optional-dependencies.rag = [
-  "numpy>=2.2.2",
-  "pgvector>=0.4.1",
-  "polyfactory>=3.1",
+  "numpy>=2.4.1",
+  "pgvector>=0.4.2",
+  "polyfactory>=3.2",
 ]
 optional-dependencies.scenarios = [
   "pyyaml>=6.0.2",

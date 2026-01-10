@@ -1,0 +1,11 @@
+$schema: https://raw.githubusercontent.com/Goldziher/ai-rulez/main/schema/ai-rules-v3.schema.json
+description: GrantFlow.AI is a comprehensive grant management platform built as a monorepo with Next.js 15/React 19 frontend and Python microservices backend. Features include collaborative document editing with CRDT, intelligent document processing (indexing, crawling, RAG), Firebase authentication, and multi-tenant organization management. Uses GCP infrastructure with Cloud Run, PostgreSQL with pgvector, and implements real-time WebSocket collaboration.
+gitignore: true
+name: grantflow
+presets:
+    - claude
+    - cursor
+    - gemini
+    - windsurf
+    - codex
+version: "3.0"
