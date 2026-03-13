@@ -46,7 +46,7 @@ jobs:
         run: uvx prek run --show-diff-on-failure --color=always --all-files
 
       - name: Detect changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: changes
         with:
           filters: |
